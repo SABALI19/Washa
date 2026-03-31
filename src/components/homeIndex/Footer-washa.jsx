@@ -1,10 +1,6 @@
 import React from "react";
-import {
-  Camera,
-  Facebook,
-  Linkedin,
-  Twitter,
-} from "lucide-react";
+import { Camera } from "lucide-react";
+import { FaFacebookF, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
 
 const footerColumns = [
   {
@@ -22,9 +18,9 @@ const footerColumns = [
 ];
 
 const socialLinks = [
-  { label: "Twitter", icon: Twitter, href: "#" },
-  { label: "Facebook", icon: Facebook, href: "#" },
-  { label: "LinkedIn", icon: Linkedin, href: "#" },
+  { label: "Twitter", icon: FaXTwitter, href: "#" },
+  { label: "Facebook", icon: FaFacebookF, href: "#" },
+  { label: "LinkedIn", icon: FaLinkedinIn, href: "#" },
 ];
 
 const Footer = () => {
