@@ -1,0 +1,269 @@
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LandingPage from "./pages/LandingPage.jsx";
+import CustomerDashboard from "./pages/CustomerDashboard.jsx";
+import DashboardLayout from "./layouts/DashboardLayout.jsx";
+import NewOrder from "./pages/NewOrder.jsx";
+import ItemVerification from "./pages/ItemVerification.jsx";
+import Login from "./components/auth/Login.jsx";
+import Signup from "./components/auth/Signup.jsx";
+import PickupSchedule from "./pages/PickupSchedule.jsx";
+import { pickupScheduleTotalScheduled } from "./pages/pickupScheduleData.js";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import AdminAnalytics from "./pages/admin/AdminPerformanceAnalytics.jsx";
+import DisputeManagement from "./pages/admin/DisputeManagement.jsx";
+import OrderTracking from "./components/OrderTracking.jsx";
+import OrderHistory from "./pages/OrderHistory.jsx";
+import StaffDashboard from "./layouts/staffdashboard/StaffDashboard.jsx";
+import staffUserImage from "./assets/images/download (1).jpg";
+import adminUserImage from "./assets/images/download (2).jpg";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Save,
+  Search,
+  Settings,
+} from "lucide-react";
+
+const verificationCustomerNames = {
+  "LT-2024-0315": "Emily Chen",
+  "LT-2024-0314": "Michael Rodriguez",
+  "LT-2024-0313": "Jessica Park",
+};
+
+function App() {
+  const currentHeaderDate = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date());
+
+  const pickupHeaderInlineContent = (
+    <div className="flex items-center gap-6 text-sm">
+      {pickupScheduleTotalScheduled > 5 && (
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Previous</span>
+        </button>
+      )}
+      <p className="text-[1.1rem] font-semibold text-slate-900">
+        {currentHeaderDate}
+      </p>
+      {pickupScheduleTotalScheduled > 5 && (
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
+        >
+          <span>Next</span>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  const adminSearchUtility = (
+    <div className="flex items-center gap-4">
+      <label className="flex w-[320px] items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <input
+          type="text"
+          placeholder="Quick search..."
+          className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+        />
+        <Search className="h-5 w-5 text-slate-400" />
+      </label>
+    </div>
+  );
+
+  const adminAnalyticsUtility = (
+    <div className="flex items-center gap-3 text-[0.75rem]">
+      <span className="text-slate-500">Date Range:</span>
+      <button
+        type="button"
+        className="rounded-xl border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700"
+      >
+        Last 7 days
+      </button>
+      <button
+        type="button"
+        className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-primary)] bg-white px-4 py-2 font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary-soft)]"
+      >
+        <Download className="h-3.5 w-3.5" />
+        <span>Export</span>
+      </button>
+    </div>
+  );
+
+  return (
+    <div>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Dashboard - all get the header via DashboardLayout */}
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard/customer" element={<CustomerDashboard />} />
+            <Route path="/new-order" element={<NewOrder />} />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                }}
+              />
+            }
+          >
+            <Route path="/orders" element={<OrderHistory />} />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                  navigationItems: [
+                    { name: "Admin Dashboard", href: "/admin/dashboard" },
+                    { name: "Orders", href: "/admin/orders" },
+                    { name: "Analytics", href: "/admin/analytics" },
+                    { name: "Disputes", href: "/admin/disputes" },
+                  ],
+                  headerUtilityContent: (
+                    <button
+                      type="button"
+                      className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)]"
+                    >
+                      <Settings className="h-5 w-5" />
+                    </button>
+                  ),
+                  user: {
+                    profileImage: adminUserImage,
+                  },
+                }}
+              />
+            }
+          >
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/orders" element={<AdminDashboard />} />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                  navigationItems: [
+                    { name: "Admin Dashboard", href: "/admin/dashboard" },
+                    { name: "Orders", href: "/admin/orders" },
+                    { name: "Analytics", href: "/admin/analytics" },
+                    { name: "Disputes", href: "/admin/disputes" },
+                  ],
+                  headerUtilityContent: adminAnalyticsUtility,
+                  user: {
+                    profileImage: adminUserImage,
+                  },
+                }}
+              />
+            }
+          >
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                  navigationItems: [
+                    { name: "Admin Dashboard", href: "/admin/dashboard" },
+                    { name: "Orders", href: "/admin/orders" },
+                    { name: "Analytics", href: "/admin/analytics" },
+                    { name: "Disputes", href: "/admin/disputes" },
+                  ],
+                  headerUtilityContent: adminSearchUtility,
+                  user: {
+                    profileImage: adminUserImage,
+                  },
+                }}
+              />
+            }
+          >
+            <Route path="/admin/disputes" element={<DisputeManagement />} />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                  navigationItems: [
+                    { name: "Staff Dashboard", href: "/staff/dashboard" },
+                    { name: "Pickups", href: "/staff/pickups" },
+                  ],
+                  headerInlineContent: pickupHeaderInlineContent,
+                  showNotificationBell: true,
+                  notificationCount: 3,
+                  user: {
+                    profileImage: staffUserImage,
+                  },
+                }}
+              />
+            }
+          >
+            <Route path="/staff/dashboard" element={<StaffDashboard />} />
+            <Route path="/staff/pickups" element={<PickupSchedule />} />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerVariant="orderTracking"
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                  backLink: "/staff/dashboard",
+                  backLabel: "Back to Dashboard",
+                  metaValueFormatter: (orderId) =>
+                    `#${orderId} - ${
+                      verificationCustomerNames[orderId] || "Customer"
+                    }`,
+                  headerActionLabel: "Save Progress",
+                  headerActionIcon: Save,
+                  headerActionHasChevron: false,
+                  user: {
+                    profileImage: staffUserImage,
+                  },
+                }}
+              />
+            }
+          >
+            <Route
+              path="/staff/verification/:orderId"
+              element={<ItemVerification />}
+            />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout
+                headerVariant="orderTracking"
+                headerProps={{
+                  brandLabel: "LaundryTrack",
+                  backLink: "/dashboard/customer",
+                  backLabel: "Back to Dashboard",
+                  metaLabel: "Order",
+                }}
+              />
+            }
+          >
+            <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
+          </Route>
+
+          {/* Catch-all - redirects unknown URLs back to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
+}
+
+export default App;
