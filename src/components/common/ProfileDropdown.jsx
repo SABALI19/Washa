@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
+import { clearAuthSession } from '../../utils/auth.js';
 
 const ProfileDropdown = ({ user, isOpen, onClose }) => {
   const dropdownRef = useRef(null);
@@ -18,6 +19,7 @@ const ProfileDropdown = ({ user, isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   const handleLogout = () => {
+    clearAuthSession();
     onClose();
     navigate('/login');
   };

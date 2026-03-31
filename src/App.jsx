@@ -6,6 +6,8 @@ import DashboardLayout from "./layouts/DashboardLayout.jsx";
 import NewOrder from "./pages/NewOrder.jsx";
 import ItemVerification from "./pages/ItemVerification.jsx";
 import Login from "./components/auth/Login.jsx";
+import PublicOnlyRoute from "./components/auth/PublicOnlyRoute.jsx";
+import RequireAuth from "./components/auth/RequireAuth.jsx";
 import Signup from "./components/auth/Signup.jsx";
 import PickupSchedule from "./pages/PickupSchedule.jsx";
 import { pickupScheduleTotalScheduled } from "./pages/pickupScheduleData.js";
@@ -103,159 +105,177 @@ function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route element={<PublicOnlyRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+          </Route>
 
           {/* Dashboard - all get the header via DashboardLayout */}
-          <Route element={<DashboardLayout />}>
-            <Route path="/dashboard/customer" element={<CustomerDashboard />} />
-            <Route path="/new-order" element={<NewOrder />} />
+          <Route element={<RequireAuth allowedRoles={["customer"]} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/dashboard/customer" element={<CustomerDashboard />} />
+              <Route path="/new-order" element={<NewOrder />} />
+            </Route>
           </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                }}
-              />
-            }
-          >
-            <Route path="/orders" element={<OrderHistory />} />
-          </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                  navigationItems: [
-                    { name: "Admin Dashboard", href: "/admin/dashboard" },
-                    { name: "Orders", href: "/admin/orders" },
-                    { name: "Analytics", href: "/admin/analytics" },
-                    { name: "Disputes", href: "/admin/disputes" },
-                  ],
-                  headerUtilityContent: (
-                    <button
-                      type="button"
-                      className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)]"
-                    >
-                      <Settings className="h-5 w-5" />
-                    </button>
-                  ),
-                  user: {
-                    profileImage: adminUserImage,
-                  },
-                }}
-              />
-            }
-          >
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/orders" element={<AdminDashboard />} />
-          </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                  navigationItems: [
-                    { name: "Admin Dashboard", href: "/admin/dashboard" },
-                    { name: "Orders", href: "/admin/orders" },
-                    { name: "Analytics", href: "/admin/analytics" },
-                    { name: "Disputes", href: "/admin/disputes" },
-                  ],
-                  headerUtilityContent: adminAnalyticsUtility,
-                  user: {
-                    profileImage: adminUserImage,
-                  },
-                }}
-              />
-            }
-          >
-            <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                  navigationItems: [
-                    { name: "Admin Dashboard", href: "/admin/dashboard" },
-                    { name: "Orders", href: "/admin/orders" },
-                    { name: "Analytics", href: "/admin/analytics" },
-                    { name: "Disputes", href: "/admin/disputes" },
-                  ],
-                  headerUtilityContent: adminSearchUtility,
-                  user: {
-                    profileImage: adminUserImage,
-                  },
-                }}
-              />
-            }
-          >
-            <Route path="/admin/disputes" element={<DisputeManagement />} />
-          </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                  navigationItems: [
-                    { name: "Staff Dashboard", href: "/staff/dashboard" },
-                    { name: "Pickups", href: "/staff/pickups" },
-                  ],
-                  headerInlineContent: pickupHeaderInlineContent,
-                  showNotificationBell: true,
-                  notificationCount: 3,
-                  user: {
-                    profileImage: staffUserImage,
-                  },
-                }}
-              />
-            }
-          >
-            <Route path="/staff/dashboard" element={<StaffDashboard />} />
-            <Route path="/staff/pickups" element={<PickupSchedule />} />
-          </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerVariant="orderTracking"
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                  backLink: "/staff/dashboard",
-                  backLabel: "Back to Dashboard",
-                  metaValueFormatter: (orderId) =>
-                    `#${orderId} - ${
-                      verificationCustomerNames[orderId] || "Customer"
-                    }`,
-                  headerActionLabel: "Save Progress",
-                  headerActionIcon: Save,
-                  headerActionHasChevron: false,
-                  user: {
-                    profileImage: staffUserImage,
-                  },
-                }}
-              />
-            }
-          >
+          <Route element={<RequireAuth allowedRoles={["customer"]} />}>
             <Route
-              path="/staff/verification/:orderId"
-              element={<ItemVerification />}
-            />
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                  }}
+                />
+              }
+            >
+              <Route path="/orders" element={<OrderHistory />} />
+            </Route>
           </Route>
-          <Route
-            element={
-              <DashboardLayout
-                headerVariant="orderTracking"
-                headerProps={{
-                  brandLabel: "LaundryTrack",
-                  backLink: "/dashboard/customer",
-                  backLabel: "Back to Dashboard",
-                  metaLabel: "Order",
-                }}
+          <Route element={<RequireAuth allowedRoles={["admin"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    navigationItems: [
+                      { name: "Admin Dashboard", href: "/admin/dashboard" },
+                      { name: "Orders", href: "/admin/orders" },
+                      { name: "Analytics", href: "/admin/analytics" },
+                      { name: "Disputes", href: "/admin/disputes" },
+                    ],
+                    headerUtilityContent: (
+                      <button
+                        type="button"
+                        className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)]"
+                      >
+                        <Settings className="h-5 w-5" />
+                      </button>
+                    ),
+                    user: {
+                      profileImage: adminUserImage,
+                    },
+                  }}
+                />
+              }
+            >
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/orders" element={<AdminDashboard />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["admin"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    navigationItems: [
+                      { name: "Admin Dashboard", href: "/admin/dashboard" },
+                      { name: "Orders", href: "/admin/orders" },
+                      { name: "Analytics", href: "/admin/analytics" },
+                      { name: "Disputes", href: "/admin/disputes" },
+                    ],
+                    headerUtilityContent: adminAnalyticsUtility,
+                    user: {
+                      profileImage: adminUserImage,
+                    },
+                  }}
+                />
+              }
+            >
+              <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["admin"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    navigationItems: [
+                      { name: "Admin Dashboard", href: "/admin/dashboard" },
+                      { name: "Orders", href: "/admin/orders" },
+                      { name: "Analytics", href: "/admin/analytics" },
+                      { name: "Disputes", href: "/admin/disputes" },
+                    ],
+                    headerUtilityContent: adminSearchUtility,
+                    user: {
+                      profileImage: adminUserImage,
+                    },
+                  }}
+                />
+              }
+            >
+              <Route path="/admin/disputes" element={<DisputeManagement />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["staff"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    navigationItems: [
+                      { name: "Staff Dashboard", href: "/staff/dashboard" },
+                      { name: "Pickups", href: "/staff/pickups" },
+                    ],
+                    headerInlineContent: pickupHeaderInlineContent,
+                    showNotificationBell: true,
+                    notificationCount: 3,
+                    user: {
+                      profileImage: staffUserImage,
+                    },
+                  }}
+                />
+              }
+            >
+              <Route path="/staff/dashboard" element={<StaffDashboard />} />
+              <Route path="/staff/pickups" element={<PickupSchedule />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["staff"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerVariant="orderTracking"
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    backLink: "/staff/dashboard",
+                    backLabel: "Back to Dashboard",
+                    metaValueFormatter: (orderId) =>
+                      `#${orderId} - ${
+                        verificationCustomerNames[orderId] || "Customer"
+                      }`,
+                    headerActionLabel: "Save Progress",
+                    headerActionIcon: Save,
+                    headerActionHasChevron: false,
+                    user: {
+                      profileImage: staffUserImage,
+                    },
+                  }}
+                />
+              }
+            >
+              <Route
+                path="/staff/verification/:orderId"
+                element={<ItemVerification />}
               />
-            }
-          >
-            <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["customer"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerVariant="orderTracking"
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    backLink: "/dashboard/customer",
+                    backLabel: "Back to Dashboard",
+                    metaLabel: "Order",
+                  }}
+                />
+              }
+            >
+              <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
+            </Route>
           </Route>
 
           {/* Catch-all - redirects unknown URLs back to home */}

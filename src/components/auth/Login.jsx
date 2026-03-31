@@ -7,11 +7,19 @@ import {
   EyeOff,
   Mail,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import laundry3Image from "../../assets/images/laundry3.jpg";
 import laundry8Image from "../../assets/images/laundry8.jpg";
 import logoBlue from "../../assets/logo/washa-logo-blue.png";
+import {
+  accountRoleLabelMap,
+  apiRequest,
+  getAuthSession,
+  getDashboardPathForRole,
+  saveAuthSession,
+} from "../../utils/auth.js";
 
 const accountRoles = ["Customer", "Staff", "Admin"];
 
@@ -22,9 +30,52 @@ const experiencePoints = [
 ];
 
 const Login = () => {
+  const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(accountRoles[0]);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const session = getAuthSession();
+
+    if (session?.user?.role) {
+      navigate(getDashboardPathForRole(session.user.role), { replace: true });
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+
+    if (!email.trim() || !password) {
+      setErrorMessage("Enter your email address and password.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const data = await apiRequest("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          role: accountRoleLabelMap[selectedRole],
+        }),
+      });
+
+      saveAuthSession(data);
+      navigate(getDashboardPathForRole(data.user.role), { replace: true });
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className="min-h-screen bg-white px-4 py-6 sm:px-6 lg:px-8">
@@ -110,18 +161,22 @@ const Login = () => {
               ))}
             </div>
 
-            <form className="mt-6 space-y-4">
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <LoginField
                 label="Email Address"
                 placeholder="Enter your email address"
                 Icon={Mail}
                 type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               />
               <PasswordField
                 label="Password"
                 placeholder="Enter your password"
                 visible={showPassword}
                 onToggleVisibility={() => setShowPassword((value) => !value)}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
               />
 
               <div className="flex items-center justify-between pt-1">
@@ -143,11 +198,16 @@ const Login = () => {
                 </button>
               </div>
 
+              {errorMessage && (
+                <p className="text-[0.72rem] font-medium text-red-500">{errorMessage}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[var(--color-primary)] px-4 py-3 text-[0.82rem] font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-[var(--color-primary)] px-4 py-3 text-[0.82rem] font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Sign In
+                {isSubmitting ? "Signing In..." : "Sign In"}
               </button>
             </form>
 
@@ -162,7 +222,9 @@ const Login = () => {
 
             <p className="mt-5 text-center text-[0.72rem] text-slate-400">
               Don&apos;t have an account?{" "}
-              <span className="font-medium text-[var(--color-primary)]">Sign Up</span>
+              <Link to="/signup" className="font-medium text-[var(--color-primary)]">
+                Sign Up
+              </Link>
             </p>
           </div>
 
@@ -177,7 +239,7 @@ const Login = () => {
   );
 };
 
-const LoginField = ({ label, placeholder, Icon, type = "text" }) => {
+const LoginField = ({ label, placeholder, Icon, type = "text", value, onChange }) => {
   return (
     <label className="block">
       <span className="mb-2 block text-[0.72rem] font-medium text-slate-700">
@@ -187,6 +249,8 @@ const LoginField = ({ label, placeholder, Icon, type = "text" }) => {
         <Icon className="h-4 w-4 shrink-0 text-slate-300" />
         <input
           type={type}
+          value={value}
+          onChange={onChange}
           placeholder={placeholder}
           className="w-full border-0 bg-transparent text-[0.78rem] text-slate-700 outline-none placeholder:text-slate-300"
         />
@@ -200,6 +264,8 @@ const PasswordField = ({
   placeholder,
   visible,
   onToggleVisibility,
+  value,
+  onChange,
 }) => {
   return (
     <label className="block">
@@ -210,6 +276,8 @@ const PasswordField = ({
         <div className="h-4 w-4 shrink-0" />
         <input
           type={visible ? "text" : "password"}
+          value={value}
+          onChange={onChange}
           placeholder={placeholder}
           className="w-full border-0 bg-transparent text-[0.78rem] text-slate-700 outline-none placeholder:text-slate-300"
         />

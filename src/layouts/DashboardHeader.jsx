@@ -3,6 +3,7 @@ import { ArrowLeft, Bell, ChevronDown } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import washaLogo from "../assets/logo/washa-logo-blue.png";
 import Profile from "../components/common/Profile";
+import { getAuthSession, getDashboardPathForRole } from "../utils/auth.js";
 
 const defaultNavigationItems = [
   { name: "Dashboard", href: "/dashboard/customer" },
@@ -30,7 +31,16 @@ const DashboardHeader = ({
 }) => {
   const location = useLocation();
   const { orderId } = useParams();
+  const storedSession = getAuthSession();
   const isTrackingVariant = variant === "orderTracking";
+  const resolvedUser =
+    storedSession?.user || user
+      ? {
+          ...(storedSession?.user || {}),
+          ...(user || {}),
+        }
+      : undefined;
+  const brandLink = getDashboardPathForRole(resolvedUser?.role);
   const resolvedMetaValue =
     metaValue ||
     (metaValueFormatter && orderId
@@ -43,7 +53,7 @@ const DashboardHeader = ({
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/dashboard/customer" className="flex items-center gap-2">
+          <Link to={brandLink} className="flex items-center gap-2">
             <img src={washaLogo} alt="Washa Logo" className="h-10 w-auto" />
             <span className="text-sm font-semibold text-gray-900">
               {brandLabel}
@@ -124,7 +134,7 @@ const DashboardHeader = ({
                 )}
               </button>
             )}
-            <Profile user={user} size="md" />
+            <Profile user={resolvedUser} size="md" />
           </div>
         </div>
 

@@ -11,11 +11,18 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import laundry3Image from "../../assets/images/laundry3.jpg";
 import laundry8Image from "../../assets/images/laundry8.jpg";
 import logoBlue from "../../assets/logo/washa-logo-blue.png";
+import {
+  apiRequest,
+  customerTypeLabelMap,
+  getAuthSession,
+  saveAuthSession,
+} from "../../utils/auth.js";
 
 const customerTypes = ["Personal Customer", "Business Customer"];
 
@@ -27,12 +34,76 @@ const trustHighlights = [
 ];
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [selectedCustomerType, setSelectedCustomerType] = useState(
     customerTypes[0],
   );
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(true);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const session = getAuthSession();
+
+    if (session?.user?.role === "customer") {
+      navigate("/dashboard/customer", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+
+    if (!fullName.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) {
+      setErrorMessage("Complete all required fields to create your account.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      setErrorMessage("You need to agree to the terms before signing up.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const data = await apiRequest("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          name: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+          role: "customer",
+          customerType: customerTypeLabelMap[selectedCustomerType],
+        }),
+      });
+
+      saveAuthSession(data);
+      navigate("/dashboard/customer", { replace: true });
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className="min-h-screen bg-white px-4 py-6 sm:px-6 lg:px-8">
@@ -125,29 +196,37 @@ const Signup = () => {
               ))}
             </div>
 
-            <form className="mt-6 space-y-4">
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <FormField
                 label="Full Name"
                 placeholder="Enter your full name"
                 Icon={User}
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
               />
               <FormField
                 label="Email Address"
                 placeholder="Enter your email address"
                 Icon={Mail}
                 type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               />
               <FormField
                 label="Phone Number"
                 placeholder="Enter your phone number"
                 Icon={Phone}
                 type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
               />
               <PasswordField
                 label="Password"
                 placeholder="Create a strong password"
                 visible={showPassword}
                 onToggleVisibility={() => setShowPassword((value) => !value)}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
               />
               <p className="-mt-2 border-t border-[var(--color-primary-soft)] pt-2 text-[0.68rem] text-slate-400">
                 Use 8+ characters with a mix of letters, numbers & symbols
@@ -159,6 +238,8 @@ const Signup = () => {
                 onToggleVisibility={() =>
                   setShowConfirmPassword((value) => !value)
                 }
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
               />
 
               <label className="flex items-start gap-2 pt-1">
@@ -176,11 +257,16 @@ const Signup = () => {
                 </span>
               </label>
 
+              {errorMessage && (
+                <p className="text-[0.72rem] font-medium text-red-500">{errorMessage}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[var(--color-primary)] px-4 py-3 text-[0.82rem] font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-[var(--color-primary)] px-4 py-3 text-[0.82rem] font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create Account
+                {isSubmitting ? "Creating Account..." : "Create Account"}
               </button>
             </form>
 
@@ -195,7 +281,9 @@ const Signup = () => {
 
             <p className="mt-5 text-center text-[0.72rem] text-slate-400">
               Already have an account?{" "}
-              <span className="font-medium text-[var(--color-primary)]">Sign In</span>
+              <Link to="/login" className="font-medium text-[var(--color-primary)]">
+                Sign In
+              </Link>
             </p>
           </div>
 
@@ -210,7 +298,7 @@ const Signup = () => {
   );
 };
 
-const FormField = ({ label, placeholder, Icon, type = "text" }) => {
+const FormField = ({ label, placeholder, Icon, type = "text", value, onChange }) => {
   return (
     <label className="block">
       <span className="mb-2 block text-[0.72rem] font-medium text-slate-700">
@@ -220,6 +308,8 @@ const FormField = ({ label, placeholder, Icon, type = "text" }) => {
         <Icon className="h-4 w-4 shrink-0 text-slate-300" />
         <input
           type={type}
+          value={value}
+          onChange={onChange}
           placeholder={placeholder}
           className="w-full border-0 bg-transparent text-[0.78rem] text-slate-700 outline-none placeholder:text-slate-300"
         />
@@ -233,6 +323,8 @@ const PasswordField = ({
   placeholder,
   visible,
   onToggleVisibility,
+  value,
+  onChange,
 }) => {
   return (
     <label className="block">
@@ -243,6 +335,8 @@ const PasswordField = ({
         <BriefcaseBusiness className="h-4 w-4 shrink-0 text-transparent" />
         <input
           type={visible ? "text" : "password"}
+          value={value}
+          onChange={onChange}
           placeholder={placeholder}
           className="w-full border-0 bg-transparent text-[0.78rem] text-slate-700 outline-none placeholder:text-slate-300"
         />

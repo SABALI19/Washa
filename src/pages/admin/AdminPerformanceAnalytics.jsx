@@ -11,6 +11,14 @@ import {
 
 import Button from "../../components/Button.jsx";
 import Card from "../../components/Card.jsx";
+import OrdeVolumeTrends from "./OrderVolumeTrends.jsx";
+import PeakHours from "./PeakHours.jsx";
+import CustomerExperience from "./CustomerExperience.jsx";
+import FinancialPerformance from "./FinancialPerformance.jsx";
+import ItemAnalytics from "./ItemAnalytics.jsx";
+import PickupTimeUtilization from "./PickupTimeUtilization.jsx";
+import ProcessingPerformance from "./ProcessingPerformance.jsx";
+import StaffMetrics from "./StaffMetrics.jsx";
 
 const rangeTabs = ["Day", "Week", "Month", "Quarter", "Year"];
 
@@ -143,6 +151,26 @@ const AdminPerformanceAnalytics = () => {
               </div>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <OrdeVolumeTrends />
+          <PeakHours />
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <ProcessingPerformance />
+          <PickupTimeUtilization />
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
+          <CustomerExperience />
+          <ItemAnalytics />
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_245px]">
+          <FinancialPerformance />
+          <StaffMetrics />
         </div>
       </div>
     </section>
