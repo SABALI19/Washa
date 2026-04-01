@@ -1,5 +1,23 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9000/api";
+const DEFAULT_API_BASE_URL = "http://localhost:9000/api";
 const AUTH_STORAGE_KEY = "washa.auth";
+
+const normalizeApiBaseUrl = (value) => {
+  const configuredBaseUrl = String(value || "").trim();
+
+  if (!configuredBaseUrl) {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  const withoutTrailingSlash = configuredBaseUrl.replace(/\/+$/, "");
+
+  if (withoutTrailingSlash.endsWith("/api")) {
+    return withoutTrailingSlash;
+  }
+
+  return `${withoutTrailingSlash}/api`;
+};
+
+const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 export const accountRoleLabelMap = {
   Customer: "customer",
