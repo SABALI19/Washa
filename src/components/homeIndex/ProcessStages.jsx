@@ -1,8 +1,8 @@
 import React from "react";
 import Pickup from "../../assets/images/process-image1.png";
-import Sorting from "../../assets/images/process-image2.png";
-import Cleaning from "../../assets/images/process-image3.png";
-import Ready from "../../assets/images/process-image4.png";
+import Sorting from "../../assets/images/Process-image2.png";
+import Cleaning from "../../assets/images/Process-image3.png";
+import Ready from "../../assets/images/Process-image4.png";
 const stages = [
   {
     id: "1",
