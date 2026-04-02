@@ -69,7 +69,8 @@ const normalizeCapturedItems = (items = []) =>
   items.map((item, index) => ({
     ...item,
     id: item.id || item.clientId || `item-${Date.now()}-${index + 1}`,
-    name: String(item.name || item.itemName || "").trim() || `Item ${index + 1}`,
+    name:
+      String(item.name || item.itemName || "").trim() || `Item ${index + 1}`,
     service: item.service || "Wash & Fold",
     notes: item.notes || "",
     quantity:
@@ -111,12 +112,15 @@ const buildItemPayload = (item) => ({
   service: item.service || "Wash & Fold",
   notes: item.notes || "",
   imageData: item.image?.startsWith("data:") ? item.image : undefined,
-  imageUrl: item.imageUrl || (!item.image?.startsWith("data:") ? item.image : ""),
+  imageUrl:
+    item.imageUrl || (!item.image?.startsWith("data:") ? item.image : ""),
 });
 
 const buildDraftPayload = ({ currentStep, capturedItems, pickupDetails }) => ({
   currentStep,
-  serviceType: [...new Set(capturedItems.map((item) => item.service || "Wash & Fold"))].join(", "),
+  serviceType: [
+    ...new Set(capturedItems.map((item) => item.service || "Wash & Fold")),
+  ].join(", "),
   pickupAddress: pickupDetails.pickupAddress.trim(),
   deliveryAddress: pickupDetails.deliveryAddress.trim(),
   pickupWindow: pickupDetails.pickupWindow,
@@ -138,7 +142,9 @@ const buildOrderPayload = ({ capturedItems, pickupDetails }) => {
 
   return {
     serviceType:
-      services.length === 1 ? services[0] : `Mixed Services (${services.join(", ")})`,
+      services.length === 1
+        ? services[0]
+        : `Mixed Services (${services.join(", ")})`,
     pickupAddress: pickupDetails.pickupAddress.trim(),
     deliveryAddress: pickupDetails.deliveryAddress.trim(),
     scheduledFor: buildScheduledForValue(
@@ -162,7 +168,9 @@ const buildOrderPayload = ({ capturedItems, pickupDetails }) => {
 };
 
 const mapServerDraftToClientState = (draft) => {
-  const scheduledDate = draft.scheduledFor ? new Date(draft.scheduledFor) : null;
+  const scheduledDate = draft.scheduledFor
+    ? new Date(draft.scheduledFor)
+    : null;
 
   return {
     draftId: draft.id || "",
@@ -196,12 +204,20 @@ const NewOrder = () => {
   const [draftId, setDraftId] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [capturedItems, setCapturedItems] = useState([]);
-  const [pickupDetails, setPickupDetails] = useState(createDefaultPickupDetails);
+  const [pickupDetails, setPickupDetails] = useState(
+    createDefaultPickupDetails,
+  );
   const [notice, setNotice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(true);
 
-  const persistLocalBackup = (nextDraftId, nextStep, nextItems, nextPickupDetails) => {
+  const persistLocalBackup = (
+    nextDraftId,
+    nextStep,
+    nextItems,
+    nextPickupDetails,
+  ) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(
       LOCAL_DRAFT_STORAGE_KEY,
@@ -233,7 +249,9 @@ const NewOrder = () => {
         if (!mounted) return;
         setDraftId(parsedDraft.draftId || "");
         setCurrentStep(parsedDraft.currentStep || 1);
-        setCapturedItems(normalizeCapturedItems(parsedDraft.capturedItems || []));
+        setCapturedItems(
+          normalizeCapturedItems(parsedDraft.capturedItems || []),
+        );
         setPickupDetails({
           ...createDefaultPickupDetails(),
           ...(parsedDraft.pickupDetails || {}),
@@ -264,7 +282,10 @@ const NewOrder = () => {
         setCurrentStep(restoredDraft.currentStep);
         setCapturedItems(restoredDraft.capturedItems);
         setPickupDetails(restoredDraft.pickupDetails);
-        setNotice({ type: "info", text: "Server draft restored successfully." });
+        setNotice({
+          type: "info",
+          text: "Server draft restored successfully.",
+        });
       } catch (error) {
         if (error.message !== "No draft order found.") restoreLocalDraft();
         else restoreLocalDraft();
@@ -290,7 +311,9 @@ const NewOrder = () => {
 
   const updateCapturedItem = (itemId, key, value) => {
     setCapturedItems((items) =>
-      items.map((item) => (item.id === itemId ? { ...item, [key]: value } : item)),
+      items.map((item) =>
+        item.id === itemId ? { ...item, [key]: value } : item,
+      ),
     );
   };
 
@@ -305,12 +328,15 @@ const NewOrder = () => {
 
     try {
       setIsSavingDraft(true);
-      const data = await apiRequest(draftId ? `/orders/drafts/${draftId}` : "/orders/drafts", {
-        method: draftId ? "PATCH" : "POST",
-        body: JSON.stringify(
-          buildDraftPayload({ currentStep, capturedItems, pickupDetails }),
-        ),
-      });
+      const data = await apiRequest(
+        draftId ? `/orders/drafts/${draftId}` : "/orders/drafts",
+        {
+          method: draftId ? "PATCH" : "POST",
+          body: JSON.stringify(
+            buildDraftPayload({ currentStep, capturedItems, pickupDetails }),
+          ),
+        },
+      );
       const restoredDraft = mapServerDraftToClientState(data.draft);
       setDraftId(restoredDraft.draftId);
       setCurrentStep(restoredDraft.currentStep);
@@ -322,7 +348,10 @@ const NewOrder = () => {
         restoredDraft.capturedItems,
         restoredDraft.pickupDetails,
       );
-      setNotice({ type: "success", text: "Draft saved to the server successfully." });
+      setNotice({
+        type: "success",
+        text: "Draft saved to the server successfully.",
+      });
     } catch (error) {
       persistLocalBackup(draftId, currentStep, capturedItems, pickupDetails);
       setNotice({
@@ -410,13 +439,15 @@ const NewOrder = () => {
       setIsSubmitting(true);
       const data = await apiRequest("/orders", {
         method: "POST",
-        body: JSON.stringify(buildOrderPayload({ capturedItems, pickupDetails })),
+        body: JSON.stringify(
+          buildOrderPayload({ capturedItems, pickupDetails }),
+        ),
       });
 
       if (draftId) {
-        await apiRequest(`/orders/drafts/${draftId}`, { method: "DELETE" }).catch(
-          () => undefined,
-        );
+        await apiRequest(`/orders/drafts/${draftId}`, {
+          method: "DELETE",
+        }).catch(() => undefined);
       }
 
       clearLocalBackup();
@@ -445,14 +476,47 @@ const NewOrder = () => {
   };
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-base font-bold text-slate-800">New Laundry Order</h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Create a new order by photographing your items and selecting pickup
-            preferences.
-          </p>
+    <section className="mx-auto w-full max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+      {showIntroModal && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/45 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[1.75rem] bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.22)] ring-1 ring-slate-100 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#2c4a7d]">
+              New Order
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-slate-900">
+              Ready to capture your laundry items?
+            </h2>
+            <p className="mt-3 text-base font-roboto leading-7 text-slate-500">
+              Create a new order by photographing your items and selecting
+              pickup preferences.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                variant="secondary"
+                size="md"
+                className="inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm sm:w-auto"
+                onClick={() => navigate("/dashboard/customer")}
+              >
+                Back to Dashboard
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                className="inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm sm:w-auto"
+                onClick={() => setShowIntroModal(false)}
+              >
+                Start Order
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-start justify-between gap-8">
+        <div className="mb-4">
+          <h1 className="text-[#2c4a7d] text-lg sm:text-sm md:text-xs lg:text-lg font-inter font-semibold ">
+            New Laundry Order
+          </h1>
         </div>
 
         <Link
@@ -460,17 +524,21 @@ const NewOrder = () => {
           className="inline-flex items-center gap-2 self-start text-sm font-medium text-[#2c4a7d] transition-colors hover:text-[#415a81]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Back to Dashboard</span>
+          <span className="hidden md:inline">Back to Dashboard</span>{" "}
+          {/* Hidden on mobile, visible on desktop */}
+          <span className="md:hidden">Back</span>{" "}
+          {/* Visible on mobile, hidden on desktop */}
         </Link>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-y-3">
+      <div className="mt-5 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mx-auto flex min-w-max flex-nowrap items-center justify-center gap-4 px-1">
         {orderSteps.map((step, index) => {
           const isActive = currentStep === step.id;
           const isCompleted = currentStep > step.id;
 
           return (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className="flex shrink-0 items-center">
               <div className="flex items-center gap-2">
                 <div
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
@@ -483,7 +551,9 @@ const NewOrder = () => {
                 </div>
                 <p
                   className={`whitespace-nowrap text-sm font-medium ${
-                    isActive || isCompleted ? "text-[#2c4a7d]" : "text-slate-400"
+                    isActive || isCompleted
+                      ? "text-[#2c4a7d]"
+                      : "text-slate-400"
                   }`}
                 >
                   {step.label}
@@ -495,6 +565,7 @@ const NewOrder = () => {
             </div>
           );
         })}
+        </div>
       </div>
 
       <div className="mt-6 rounded-lg bg-white p-6 shadow-md ring-1 ring-slate-100">
@@ -568,7 +639,11 @@ const NewOrder = () => {
                     <select
                       value={item.service || "Wash & Fold"}
                       onChange={(event) =>
-                        updateCapturedItem(item.id, "service", event.target.value)
+                        updateCapturedItem(
+                          item.id,
+                          "service",
+                          event.target.value,
+                        )
                       }
                       className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#2c4a7d]"
                     >
@@ -589,7 +664,11 @@ const NewOrder = () => {
                       min="1"
                       value={item.quantity || 1}
                       onChange={(event) =>
-                        updateCapturedItem(item.id, "quantity", event.target.value)
+                        updateCapturedItem(
+                          item.id,
+                          "quantity",
+                          event.target.value,
+                        )
                       }
                       className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#2c4a7d]"
                     />

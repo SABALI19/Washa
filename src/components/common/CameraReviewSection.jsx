@@ -233,7 +233,7 @@ const CameraReviewSection = ({
               <button
                 type="button"
                 onClick={() => setIsFullscreenPreview(true)}
-                className="relative block h-[420px] w-full text-left"
+                className="relative block h-105 w-full text-left"
               >
                 <video
                   ref={previewVideoRef}
@@ -280,11 +280,11 @@ const CameraReviewSection = ({
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <Button
               variant="primary"
               size="md"
-              className="inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-base"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm sm:text-base"
               onClick={handleCapturePhoto}
               disabled={!isCameraActive || !isVideoReady}
             >
@@ -295,7 +295,7 @@ const CameraReviewSection = ({
             <Button
               variant="secondary"
               size="md"
-              className="inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-base"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm sm:text-base"
               onClick={handleCameraToggle}
               disabled={isStartingCamera}
             >
@@ -312,7 +312,7 @@ const CameraReviewSection = ({
             <Button
               variant="secondary"
               size="md"
-              className="inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-base"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm sm:text-base"
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="h-5 w-5" />
@@ -383,7 +383,7 @@ const CameraReviewSection = ({
       </div>
 
       {isCameraActive && isFullscreenPreview && (
-        <div className="fixed inset-0 z-[100] bg-black">
+        <div className="fixed inset-0 z-[100] bg-black md:hidden">
           <button
             type="button"
             onClick={() => setIsFullscreenPreview(false)}
