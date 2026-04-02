@@ -1,9 +1,12 @@
 import React from "react";
 import WashaImage from "../../assets/images/washa-landingimg.png";
+import Button from "../Button.jsx";
 import { Camera, Clock, Play, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col w-full justify-center items-center bg-white px-4 py-10">
       <div className="flex p-8 w-full max-w-6xl flex-col items-center justify-center gap-10 md:flex-row">
@@ -48,13 +51,15 @@ const HeroSection = () => {
       </div>
         {/* cta button */}
       <div className="mt-8">
-        <Link
-          to="/customerdashboard"
-          className="inline-flex items-center gap-2 rounded-md bg-[#35558b] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2c4a7d]"
-        >
-          <Play className="h-4 w-4" />
-          Start Laundry Order
-        </Link>
+         <Button
+          variant=""
+           onClick={() => navigate('/dashboard/customer')}
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md text-white px-5 py-3 text-sm font-semibold bg-[#35558b] shadow-sm transition hover:bg-[#f3f5f8]"
+          >
+            <Play className="h-4 w-4" />
+           Start Laundry Order
+          </Button>
       </div>
     </div>
   );
