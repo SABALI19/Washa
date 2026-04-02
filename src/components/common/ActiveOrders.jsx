@@ -116,7 +116,7 @@ const ActiveOrders = () => {
                   className="h-1.5 rounded-full transition-all duration-500"
                   style={{
                     width: `${order.progress}%`,
-                    backgroundColor: "#1a7a6e",   /* teal progress bar from screenshot */
+                    backgroundColor: "#2c4a7d",   /* teal progress bar from screenshot */
                   }}
                 />
               </div>
@@ -132,7 +132,7 @@ const ActiveOrders = () => {
               </div>
               <Link
                 to={`/order-tracking/${order.id}`}
-                className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors"
+                className="text-sm font-medium text-[#2c4a7d] hover:text-[#415a81] transition-colors"
               >
                 View Details
               </Link>
