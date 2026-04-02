@@ -18,6 +18,7 @@ const normalizeApiBaseUrl = (value) => {
 };
 
 const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+const API_ORIGIN = API_BASE_URL.replace(/\/api$/, "");
 
 export const accountRoleLabelMap = {
   Customer: "customer",
@@ -77,12 +78,40 @@ export const clearAuthSession = () => {
   localStorage.removeItem(AUTH_STORAGE_KEY);
 };
 
+export const resolveApiAssetUrl = (value) => {
+  const normalizedValue = String(value || "").trim();
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  if (
+    normalizedValue.startsWith("data:") ||
+    normalizedValue.startsWith("http://") ||
+    normalizedValue.startsWith("https://")
+  ) {
+    return normalizedValue;
+  }
+
+  return `${API_ORIGIN}${normalizedValue.startsWith("/") ? "" : "/"}${normalizedValue}`;
+};
+
 export const apiRequest = async (path, options = {}) => {
+  const session = getAuthSession();
+  const headers = {
+    ...(options.headers || {}),
+  };
+
+  if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (session?.token && !headers.Authorization) {
+    headers.Authorization = `Bearer ${session.token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers,
     ...options,
   });
 
