@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "../Button";
-import { Camera, ScanLine, Trash2, Upload } from "lucide-react";
+import {
+  Camera,
+  Expand,
+  ScanLine,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 
 const CameraReviewSection = ({
   capturedItems = [],
@@ -17,7 +24,9 @@ const CameraReviewSection = ({
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const videoRef = useRef(null);
+  const [isFullscreenPreview, setIsFullscreenPreview] = useState(false);
+  const previewVideoRef = useRef(null);
+  const fullscreenVideoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
   const streamRef = useRef(null);
@@ -28,25 +37,36 @@ const CameraReviewSection = ({
       streamRef.current = null;
     }
 
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+    [previewVideoRef.current, fullscreenVideoRef.current].forEach((videoNode) => {
+      if (videoNode) {
+        videoNode.srcObject = null;
+      }
+    });
 
     setIsCameraActive(false);
     setIsVideoReady(false);
+    setIsFullscreenPreview(false);
   };
 
   useEffect(() => stopCameraStream, []);
 
   useEffect(() => {
     const attachStreamToVideo = async () => {
-      if (!isCameraActive || !streamRef.current || !videoRef.current) {
+      if (!isCameraActive || !streamRef.current) {
         return;
       }
 
       try {
-        videoRef.current.srcObject = streamRef.current;
-        await videoRef.current.play();
+        const activeVideoRefs = [previewVideoRef.current, fullscreenVideoRef.current];
+
+        await Promise.all(
+          activeVideoRefs
+            .filter(Boolean)
+            .map(async (videoNode) => {
+              videoNode.srcObject = streamRef.current;
+              await videoNode.play();
+            })
+        );
       } catch {
         setCameraError(
           "Unable to start the live preview. Please try activating the camera again."
@@ -56,7 +76,23 @@ const CameraReviewSection = ({
     };
 
     attachStreamToVideo();
-  }, [isCameraActive]);
+  }, [isCameraActive, isFullscreenPreview]);
+
+  useEffect(() => {
+    if (!isFullscreenPreview) {
+      return undefined;
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsFullscreenPreview(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isFullscreenPreview]);
 
   const activateCamera = async () => {
     if (!navigator?.mediaDevices?.getUserMedia) {
@@ -118,7 +154,6 @@ const CameraReviewSection = ({
 
   const handleCapturePhoto = () => {
     if (
-      !videoRef.current ||
       !canvasRef.current ||
       !isCameraActive ||
       !isVideoReady
@@ -127,7 +162,7 @@ const CameraReviewSection = ({
       return;
     }
 
-    const video = videoRef.current;
+    const video = fullscreenVideoRef.current || previewVideoRef.current;
     const canvas = canvasRef.current;
     const width = video.videoWidth;
     const height = video.videoHeight;
@@ -195,15 +230,25 @@ const CameraReviewSection = ({
         <div className="rounded-2xl bg-slate-50 p-4 shadow-inner ring-1 ring-slate-100 sm:p-5">
           <div className="relative overflow-hidden rounded-2xl border border-dashed border-[#2c4a7d]/20 bg-[#f5f7f7]">
             {isCameraActive ? (
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                onLoadedMetadata={() => setIsVideoReady(true)}
-                onCanPlay={() => setIsVideoReady(true)}
-                className="h-[420px] w-full rounded-2xl object-cover"
-              />
+              <button
+                type="button"
+                onClick={() => setIsFullscreenPreview(true)}
+                className="relative block h-[420px] w-full text-left"
+              >
+                <video
+                  ref={previewVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  onLoadedMetadata={() => setIsVideoReady(true)}
+                  onCanPlay={() => setIsVideoReady(true)}
+                  className="h-[420px] w-full rounded-2xl object-cover"
+                />
+                <CameraFrameOverlay compact />
+                <div className="absolute right-4 top-4 rounded-full bg-slate-900/65 p-2 text-white backdrop-blur-sm">
+                  <Expand className="h-4 w-4" />
+                </div>
+              </button>
             ) : latestCapture ? (
               <img
                 src={latestCapture.image}
@@ -280,7 +325,6 @@ const CameraReviewSection = ({
             type="file"
             accept="image/*"
             multiple
-            capture="environment"
             className="hidden"
             onChange={handleUploadedFiles}
           />
@@ -337,8 +381,76 @@ const CameraReviewSection = ({
           </div>
         )}
       </div>
+
+      {isCameraActive && isFullscreenPreview && (
+        <div className="fixed inset-0 z-[100] bg-black md:hidden">
+          <button
+            type="button"
+            onClick={() => setIsFullscreenPreview(false)}
+            className="absolute right-4 top-4 z-[110] rounded-full bg-white/15 p-3 text-white backdrop-blur-sm"
+            aria-label="Close full-screen camera preview"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          <div className="relative flex h-full w-full items-center justify-center">
+            <video
+              ref={fullscreenVideoRef}
+              autoPlay
+              muted
+              playsInline
+              onLoadedMetadata={() => setIsVideoReady(true)}
+              onCanPlay={() => setIsVideoReady(true)}
+              className="h-full w-full object-cover"
+            />
+            <CameraFrameOverlay />
+
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-5 pb-8 pt-20 text-white">
+              <p className="text-base font-semibold">Live Camera Preview</p>
+              <p className="mt-2 text-sm text-slate-200">
+                Keep the item inside the frame and leave a little space around the edges for a clearer shot.
+              </p>
+              <div className="mt-5 flex gap-3">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border-white/40 bg-white/10 px-5 py-3 text-sm text-white hover:bg-white/20 hover:text-white"
+                  onClick={() => setIsFullscreenPreview(false)}
+                >
+                  <span>Back to Form</span>
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm"
+                  onClick={handleCapturePhoto}
+                  disabled={!isVideoReady}
+                >
+                  <Camera className="h-4 w-4" />
+                  <span>Capture</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const CameraFrameOverlay = ({ compact = false }) => (
+  <div className="pointer-events-none absolute inset-0">
+    <div
+      className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border-2 border-white/85 shadow-[0_0_0_9999px_rgba(15,23,42,0.16)] ${
+        compact ? "h-[68%] w-[72%]" : "h-[72%] w-[78%]"
+      }`}
+    >
+      <div className="absolute left-4 top-4 h-7 w-7 rounded-tl-xl border-l-4 border-t-4 border-white" />
+      <div className="absolute right-4 top-4 h-7 w-7 rounded-tr-xl border-r-4 border-t-4 border-white" />
+      <div className="absolute bottom-4 left-4 h-7 w-7 rounded-bl-xl border-b-4 border-l-4 border-white" />
+      <div className="absolute bottom-4 right-4 h-7 w-7 rounded-br-xl border-b-4 border-r-4 border-white" />
+    </div>
+  </div>
+);
 
 export default CameraReviewSection;
