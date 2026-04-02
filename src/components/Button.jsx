@@ -6,7 +6,10 @@ const Button = ({
   size = "md",
   fontWeight = "semibold",
   className = "",
+  type = "button",
+  disabled = false,
   onClick,
+  ...rest
 }) => {
      const fontWeights = {
     light: "font-light",
@@ -20,7 +23,7 @@ const Button = ({
 
 
   const baseStyles =
-  "font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2";
+  "font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
 
 const variants = {
   primary: "bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)]",
@@ -45,7 +48,13 @@ const variants = {
   `;
 
   return (
-    <button onClick={onClick} className={buttonStyles}>
+    <button
+      type={type}
+      onClick={onClick}
+      className={buttonStyles}
+      disabled={disabled}
+      {...rest}
+    >
       {children}
     </button>
   );
