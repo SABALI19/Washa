@@ -16,6 +16,7 @@ const CameraReviewSection = ({
   const [cameraError, setCameraError] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -32,9 +33,30 @@ const CameraReviewSection = ({
     }
 
     setIsCameraActive(false);
+    setIsVideoReady(false);
   };
 
   useEffect(() => stopCameraStream, []);
+
+  useEffect(() => {
+    const attachStreamToVideo = async () => {
+      if (!isCameraActive || !streamRef.current || !videoRef.current) {
+        return;
+      }
+
+      try {
+        videoRef.current.srcObject = streamRef.current;
+        await videoRef.current.play();
+      } catch {
+        setCameraError(
+          "Unable to start the live preview. Please try activating the camera again."
+        );
+        setIsVideoReady(false);
+      }
+    };
+
+    attachStreamToVideo();
+  }, [isCameraActive]);
 
   const activateCamera = async () => {
     if (!navigator?.mediaDevices?.getUserMedia) {
@@ -55,13 +77,8 @@ const CameraReviewSection = ({
 
       stopCameraStream();
       streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-
       setIsCameraActive(true);
+      setIsVideoReady(false);
       onActivateCamera?.(stream);
     } catch {
       setCameraError(
@@ -100,15 +117,27 @@ const CameraReviewSection = ({
   };
 
   const handleCapturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current || !isCameraActive) {
+    if (
+      !videoRef.current ||
+      !canvasRef.current ||
+      !isCameraActive ||
+      !isVideoReady
+    ) {
       setCameraError("Activate the camera before taking a photo.");
       return;
     }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const width = video.videoWidth || 1280;
-    const height = video.videoHeight || 720;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) {
+      setCameraError(
+        "Camera preview is still loading. Wait a moment, then capture again."
+      );
+      return;
+    }
 
     canvas.width = width;
     canvas.height = height;
@@ -171,6 +200,8 @@ const CameraReviewSection = ({
                 autoPlay
                 muted
                 playsInline
+                onLoadedMetadata={() => setIsVideoReady(true)}
+                onCanPlay={() => setIsVideoReady(true)}
                 className="h-[420px] w-full rounded-2xl object-cover"
               />
             ) : latestCapture ? (
@@ -210,7 +241,7 @@ const CameraReviewSection = ({
               size="md"
               className="inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-base"
               onClick={handleCapturePhoto}
-              disabled={!isCameraActive}
+              disabled={!isCameraActive || !isVideoReady}
             >
               <Camera className="h-5 w-5" />
               <span>{captureLabel}</span>
