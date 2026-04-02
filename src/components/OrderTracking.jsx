@@ -18,8 +18,17 @@ import {
   PackageCheck,
   Share2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { apiRequest, resolveApiAssetUrl } from "../utils/auth.js";
+import {
+  countOrderItems,
+  defaultOrderPreviewImages,
+  formatOrderDate,
+  formatOrderDateTime,
+  getDisplayOrderStatus,
+  getTrackingStatusClassName,
+} from "../utils/customerOrderDisplay.js";
 
 // ToggleSwitch component
 const ToggleSwitch = ({
@@ -220,6 +229,80 @@ const trackedItems = [
   },
 ];
 
+const trackingStageClassMap = {
+  Pending: "bg-slate-100 text-slate-700",
+  Confirmed: "bg-teal-100 text-teal-700",
+  "In Progress": "bg-amber-100 text-[#2c4a7d]",
+  Completed: "bg-emerald-100 text-emerald-700",
+  Cancelled: "bg-rose-100 text-rose-700",
+};
+
+const remoteProgressStepDefinitions = [
+  { key: "pending", label: "Order Received" },
+  { key: "confirmed", label: "Confirmed" },
+  { key: "in-progress", label: "Cleaning in Progress" },
+  { key: "completed", label: "Ready for Pickup" },
+];
+
+const getRemoteStatusIndex = (status) => {
+  if (status === "cancelled") return 0;
+
+  const matchedIndex = remoteProgressStepDefinitions.findIndex(
+    (step) => step.key === status,
+  );
+
+  return matchedIndex === -1 ? 0 : matchedIndex;
+};
+
+const extractPickupWindow = (notes) => {
+  const match = String(notes || "").match(/Preferred pickup window:\s*(.+)/i);
+  return match?.[1]?.trim() || "";
+};
+
+const buildRemoteProgressSteps = (order) => {
+  const activeIndex = getRemoteStatusIndex(order.status);
+  const createdAtText = formatOrderDateTime(order.createdAt);
+  const updatedAtText = formatOrderDateTime(order.updatedAt);
+  const scheduledForText = formatOrderDateTime(order.scheduledFor);
+
+  if (order.status === "cancelled") {
+    return remoteProgressStepDefinitions.map((step, index) => ({
+      label: step.label,
+      status: index === 0 ? "completed" : "pending",
+      detail: index === 0 ? createdAtText || "Received" : "Cancelled",
+    }));
+  }
+
+  return remoteProgressStepDefinitions.map((step, index) => {
+    if (index < activeIndex) {
+      return {
+        label: step.label,
+        status: "completed",
+        detail: index === 0 ? createdAtText || "Completed" : updatedAtText || "Completed",
+      };
+    }
+
+    if (index === activeIndex) {
+      return {
+        label: step.label,
+        status: order.status === "completed" ? "completed" : "active",
+        detail:
+          step.key === "completed"
+            ? scheduledForText || "Ready soon"
+            : step.key === "pending"
+              ? createdAtText || "Received"
+              : updatedAtText || "In Progress",
+      };
+    }
+
+    return {
+      label: step.label,
+      status: "pending",
+      detail: "Pending",
+    };
+  });
+};
+
 const OrderTracking = () => {
   const { orderId = "LT2024001" } = useParams();
   const [pickupRemindersEnabled, setPickupRemindersEnabled] = useState(false);
@@ -227,6 +310,29 @@ const OrderTracking = () => {
     sms: true,
     email: true,
   });
+  const [remoteOrder, setRemoteOrder] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadOrder = async () => {
+      try {
+        const data = await apiRequest(`/orders/${orderId}`);
+        if (!isMounted) return;
+        setRemoteOrder(data.order || null);
+      } catch {
+        if (isMounted) {
+          setRemoteOrder(null);
+        }
+      }
+    };
+
+    loadOrder();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [orderId]);
 
   const toggleNotificationPreference = (key) => {
     setNotificationPreferences((current) => ({
@@ -235,22 +341,85 @@ const OrderTracking = () => {
     }));
   };
 
+  const remoteOrderView = useMemo(() => {
+    if (!remoteOrder) return null;
+
+    const status = getDisplayOrderStatus(remoteOrder.status);
+    const pickupWindow = extractPickupWindow(remoteOrder.notes);
+    const items = (remoteOrder.items || []).map((item, index) => ({
+      id: item.clientId || `${remoteOrder.id}-${index + 1}`,
+      name: item.itemName || `Item ${index + 1}`,
+      image:
+        resolveApiAssetUrl(item.imageUrl) ||
+        defaultOrderPreviewImages[index % defaultOrderPreviewImages.length],
+      stage: status,
+      note: item.notes || item.service || "",
+      color: "gray",
+      stageClassName:
+        trackingStageClassMap[status] || "bg-slate-100 text-slate-700",
+    }));
+
+    return {
+      displayId: remoteOrder.orderNumber || orderId,
+      createdAtText: formatOrderDateTime(remoteOrder.createdAt),
+      status,
+      statusClassName: getTrackingStatusClassName(status),
+      progressSteps: buildRemoteProgressSteps(remoteOrder),
+      completionText:
+        formatOrderDateTime(remoteOrder.scheduledFor) || "Awaiting pickup schedule",
+      lastUpdatedText:
+        formatOrderDateTime(remoteOrder.updatedAt) ||
+        formatOrderDateTime(remoteOrder.createdAt),
+      pickupDateText: formatOrderDate(remoteOrder.scheduledFor) || "To be confirmed",
+      pickupTimeText: pickupWindow || "To be confirmed",
+      locationLines: [
+        remoteOrder.pickupAddress ? `Pickup: ${remoteOrder.pickupAddress}` : "",
+        remoteOrder.deliveryAddress ? `Delivery: ${remoteOrder.deliveryAddress}` : "",
+      ].filter(Boolean),
+      instructions: remoteOrder.notes || "No pickup instructions provided yet.",
+      itemsCount: countOrderItems(remoteOrder.items),
+      trackedItems: items.length ? items : trackedItems,
+    };
+  }, [orderId, remoteOrder]);
+
+  const displayOrderId = remoteOrderView?.displayId || orderId;
+  const orderStatus = remoteOrderView?.status || orderSummary.status;
+  const orderCreatedAtText =
+    remoteOrderView?.createdAtText || orderSummary.createdAt.replace(/^Created on\s*/i, "");
+  const renderedProgressSteps = remoteOrderView?.progressSteps || progressSteps;
+  const estimatedCompletionText =
+    remoteOrderView?.completionText || "March 17, 2024 - 3:00 PM";
+  const lastUpdatedText = remoteOrderView?.lastUpdatedText || "Mar 15, 1:45 PM";
+  const pickupDateText = remoteOrderView?.pickupDateText || "March 17, 2024";
+  const pickupTimeText = remoteOrderView?.pickupTimeText || "3:00 PM - 6:00 PM";
+  const locationLines = remoteOrderView?.locationLines || [
+    "CleanCare Laundry Services",
+    "123 Main Street, Suite 100",
+    "Downtown, NY 10001",
+    "(555) 123-4567",
+  ];
+  const pickupInstructions =
+    remoteOrderView?.instructions ||
+    "Please bring a valid ID for pickup verification. Items will be ready at the front counter.";
+  const displayedItemsCount = remoteOrderView?.itemsCount || 12;
+  const displayedTrackedItems = remoteOrderView?.trackedItems || trackedItems;
+
   return (
     <section className="mx-auto w-full max-w-[1180px] space-y-6">
       <div className="rounded-lg bg-white px-6 py-7 shadow-md sm:px-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h1 className="text-lg font-inter font-bold text-slate-900">
-              Order #{orderId}
+              Order #{displayOrderId}
             </h1>
             <p className="mt-3 font-roboto text-sm text-gray-500 ">
-              {orderSummary.createdAt}
+              Created on {orderCreatedAtText}
             </p>
           </div>
 
           <div className="flex items-center gap-4 self-start">
-            <span className="rounded-full bg-amber-100 px-4 py-1 text- font-semibold text-[#2c4a7d]">
-              {orderSummary.status}
+            <span className={remoteOrderView?.statusClassName || "rounded-full bg-amber-100 px-4 py-1 text-sm font-semibold text-[#2c4a7d]"}>
+              {orderStatus}
             </span>
             <button className="inline-flex items-center justify-center gap-1 text-base font-medium text-[#2c4a7d] transition-colors hover:text-[#415a81]">
               <DownloadIcon className="h-4 text-sm w-4" />
@@ -267,11 +436,11 @@ const OrderTracking = () => {
 
         {/* Steps row */}
         <div className="relative flex items-start justify-between">
-          {progressSteps.map((step, index) => {
+          {renderedProgressSteps.map((step, index) => {
             const isCompleted = step.status === "completed";
             const isActive = step.status === "active";
             const isPending = step.status === "pending";
-            const isLast = index === progressSteps.length - 1;
+            const isLast = index === renderedProgressSteps.length - 1;
 
             return (
               <div
@@ -331,13 +500,13 @@ const OrderTracking = () => {
           <div>
             <p className="text-xs text-slate-500">Estimated Completion</p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              March 17, 2024 - 3:00 PM
+              {estimatedCompletionText}
             </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-slate-500">Last Updated</p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              Mar 15, 1:45 PM
+              {lastUpdatedText}
             </p>
           </div>
         </div>
@@ -354,20 +523,19 @@ const OrderTracking = () => {
                 Scheduled Pickup
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                Date: March 17, 2024
+                Date: {pickupDateText}
               </p>
               <p className="mt-0.5 text-sm text-slate-500">
-                Time: 3:00 PM - 6:00 PM
+                Time: {pickupTimeText}
               </p>
             </div>
 
             <div>
               <h3 className="text-sm font-semibold text-slate-800">Location</h3>
               <div className="mt-1 space-y-0.5 text-sm text-slate-500">
-                <p>CleanCare Laundry Services</p>
-                <p>123 Main Street, Suite 100</p>
-                <p>Downtown, NY 10001</p>
-                <p>(555) 123-4567</p>
+                {locationLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
               </div>
             </div>
           </div>
@@ -378,8 +546,7 @@ const OrderTracking = () => {
               Pickup Instructions
             </h3>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Please bring a valid ID for pickup verification. Items will be
-              ready at the front counter.
+              {pickupInstructions}
             </p>
             <Button
               variant="primary"
@@ -396,7 +563,7 @@ const OrderTracking = () => {
       <div className="rounded-lg bg-white px-6 py-7 shadow-md ring-1 ring-slate-100 sm:px-8">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-800">
-            Your Items (12 items)
+            Your Items ({displayedItemsCount} items)
           </h2>
           <button className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2c4a7d] transition-colors hover:text-teal-700">
             <Grid2x2 className="h-3.5 w-3.5" />
@@ -404,7 +571,7 @@ const OrderTracking = () => {
           </button>
         </div>
         <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {trackedItems.map((item) => {
+          {displayedTrackedItems.map((item) => {
             const colorStyle = getItemColorStyle(item.color);
             return (
               <article

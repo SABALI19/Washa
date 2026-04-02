@@ -1,12 +1,6 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import Button from "../components/Button";
 import FabButton from "../components/common/FabButton.jsx";
-import jacketImage from "../assets/images/jacket.jpg";
-import laundry1Image from "../assets/images/laundry1.jpg";
-import laundry2Image from "../assets/images/laundry2.jpg";
-import laundry4Image from "../assets/images/laundry4.jpg";
-import laundry7Image from "../assets/images/laundry7.jpg";
-import yellowTImage from "../assets/images/Yellow-T.jpg";
 import {
   Check,
   ChevronDown,
@@ -20,8 +14,11 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const statusOptions = ["All Status", "Completed", "Cancelled"];
+import useCustomerOrders from "../hooks/useCustomerOrders.js";
+import {
+  normalizeApiOrderForHistoryCard,
+  staticHistoryOrders,
+} from "../utils/customerOrderDisplay.js";
 
 const dateRangeOptions = [
   { id: "all", label: "All Time" },
@@ -33,53 +30,6 @@ const dateRangeOptions = [
 const sortOptions = [
   { id: "newest", label: "Newest First" },
   { id: "oldest", label: "Oldest First" },
-];
-
-const orders = [
-  {
-    id: "LT2024245",
-    completedText: "Completed on March 12, 2024",
-    status: "Completed",
-    statusClassName: "bg-[#d7ecf1] text-[#2c4a7d]",
-    eventLabel: "Picked up",
-    eventDate: "March 12, 2024",
-    date: new Date("2024-03-12"),
-    itemsCount: 8,
-    previewImages: [laundry1Image, laundry7Image, laundry4Image, jacketImage],
-  },
-  {
-    id: "LT2024244",
-    completedText: "Completed on March 8, 2024",
-    status: "Completed",
-    statusClassName: "bg-[#d7ecf1] text-[#2c4a7d]",
-    eventLabel: "Picked up",
-    eventDate: "March 8, 2024",
-    date: new Date("2024-03-08"),
-    itemsCount: 12,
-    previewImages: [laundry1Image, laundry2Image, yellowTImage, jacketImage],
-  },
-  {
-    id: "LT2024243",
-    completedText: "Cancelled on March 5, 2024",
-    status: "Cancelled",
-    statusClassName: "bg-[#f7dada] text-[#b7545b]",
-    eventLabel: "Cancelled",
-    eventDate: "March 5, 2024",
-    date: new Date("2024-03-05"),
-    itemsCount: 5,
-    previewImages: [laundry1Image, laundry7Image, laundry4Image],
-  },
-  {
-    id: "LT2024242",
-    completedText: "Completed on March 1, 2024",
-    status: "Completed",
-    statusClassName: "bg-[#d7ecf1] text-[#2c4a7d]",
-    eventLabel: "Picked up",
-    eventDate: "March 1, 2024",
-    date: new Date("2024-03-01"),
-    itemsCount: 9,
-    previewImages: [yellowTImage, laundry1Image, laundry2Image, jacketImage],
-  },
 ];
 
 const summaryCards = [
@@ -112,10 +62,21 @@ const getDateThreshold = (rangeId) => {
 };
 
 const OrderHistory = () => {
+  const { orders: customerOrders } = useCustomerOrders();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSort, setActiveSort] = useState("newest");
   const [activeStatus, setActiveStatus] = useState("All Status");
   const [activeDateRange, setActiveDateRange] = useState("all");
+
+  const allOrders = useMemo(() => {
+    const liveOrders = customerOrders.map(normalizeApiOrderForHistoryCard);
+    return [...liveOrders, ...staticHistoryOrders];
+  }, [customerOrders]);
+
+  const statusOptions = useMemo(
+    () => ["All Status", ...new Set(allOrders.map((order) => order.status))],
+    [allOrders],
+  );
 
   const hasActiveFilters =
     searchQuery !== "" ||
@@ -131,7 +92,7 @@ const OrderHistory = () => {
   };
 
   const filteredOrders = useMemo(() => {
-    let result = [...orders];
+    let result = [...allOrders];
 
     // search filter
     if (searchQuery.trim()) {
@@ -160,7 +121,7 @@ const OrderHistory = () => {
     );
 
     return result;
-  }, [searchQuery, activeStatus, activeSort, activeDateRange]);
+  }, [allOrders, searchQuery, activeStatus, activeSort, activeDateRange]);
 
   return (
     <section className="mx-auto w-full">
@@ -169,7 +130,7 @@ const OrderHistory = () => {
         <div>
           <h1 className="text-base font-bold text-slate-800">Order History</h1>
           <p className="mt-1 text-xs text-slate-500">
-            Complete archive of your past laundry orders (247 total orders)
+            Complete archive of your past laundry orders ({allOrders.length} total orders)
           </p>
         </div>
         <Link to="/new-order" className="hidden self-start sm:block">
@@ -285,7 +246,7 @@ const OrderHistory = () => {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between sm:justify-start sm:gap-4">
                   <h2 className="text-sm font-semibold text-slate-900">
-                    Order #{order.id}
+                    Order #{order.displayId || order.id}
                   </h2>
                   <span
                     className={`inline-flex rounded-full px-3 py-0.5 text-xs font-medium ${order.statusClassName}`}
@@ -324,7 +285,7 @@ const OrderHistory = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <Link
-                    to={`/order-tracking/${order.id}`}
+                    to={`/order-tracking/${order.routeId || order.id}`}
                     className="text-xs font-medium text-[#2c4a7d] hover:text-[#415a81]"
                   >
                     View Details
@@ -349,7 +310,7 @@ const OrderHistory = () => {
       {/* Pagination */}
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-slate-500">
-          Showing {filteredOrders.length} of 247 orders
+          Showing {filteredOrders.length} of {allOrders.length} orders
         </p>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <button type="button" className="rounded-full p-1.5 transition-colors hover:bg-slate-100">

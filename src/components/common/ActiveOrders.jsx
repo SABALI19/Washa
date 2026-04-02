@@ -1,55 +1,23 @@
-import React, { useState } from "react";
+import { useMemo } from "react";
 import Card from "../Card.jsx";
 import { Link } from "react-router-dom";
-import Laundry1 from "../../assets/images/laundry1.jpg";
-import Laundry2 from "../../assets/images/laundry2.jpg";
-import Laundry3 from "../../assets/images/laundry3.jpg";
-import Laundry4 from "../../assets/images/laundry4.jpg";
-import Laundry5 from "../../assets/images/laundry5.jpg";
-import Laundry6 from "../../assets/images/laundry6.jpg";
-import Laundry7 from "../../assets/images/laundry7.jpg";
-import Laundry8 from "../../assets/images/laundry8.jpg";
+import useCustomerOrders from "../../hooks/useCustomerOrders.js";
+import {
+  getActiveStatusClassName,
+  normalizeApiOrderForActiveCard,
+  staticActiveOrders,
+} from "../../utils/customerOrderDisplay.js";
 
 const ActiveOrders = () => {
-  const [orders] = useState([
-    {
-      id: "LT2024001",
-      date: "March 15, 2024",
-      status: "Washing",
-      items: 6,
-      progress: 60,
-      completion: "March 17, 2024 - 3:00 PM",
-      images: [Laundry1, Laundry3, Laundry6, Laundry4, Laundry5, Laundry8],
-    },
-    {
-      id: "LT2024002",
-      date: "March 16, 2024",
-      status: "Ironing",
-      items: 4,
-      progress: 85,
-      completion: "March 16, 2024 - 6:00 PM",
-      images: [Laundry1, Laundry3, Laundry6, Laundry4],
-    },
-    {
-      id: "LT2024003",
-      date: "March 16, 2024",
-      status: "Drying",
-      items: 4,
-      progress: 95,
-      completion: "March 16, 2024 - 6:00 PM",
-      images: [Laundry1, Laundry3, Laundry6, Laundry4],
-    },
-  ]);
+  const { orders: customerOrders } = useCustomerOrders();
 
-  const getStatusStyle = (status) => {
-    const styles = {
-      Washing: "bg-teal-100 text-teal-700",
-      Ironing: "bg-amber-100 text-amber-700",
-      Drying:  "bg-purple-100 text-purple-700",
-      Completed: "bg-green-100 text-green-700",
-    };
-    return styles[status] || "bg-gray-100 text-gray-600";
-  };
+  const orders = useMemo(() => {
+    const liveOrders = customerOrders
+      .filter((order) => !["completed", "cancelled"].includes(order.status))
+      .map(normalizeApiOrderForActiveCard);
+
+    return [...liveOrders, ...staticActiveOrders];
+  }, [customerOrders]);
 
   return (
     <section className="w-full px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
@@ -70,11 +38,11 @@ const ActiveOrders = () => {
                   Order
                 </span>
                 <span className="text-sm font-bold text-gray-800 font-mono">
-                  #{order.id}
+                  #{order.displayId || order.id}
                 </span>
               </div>
               <span
-                className={`px-3 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(order.status)}`}
+                className={`px-3 py-0.5 rounded-full text-xs font-medium ${getActiveStatusClassName(order.status)}`}
               >
                 {order.status}
               </span>
@@ -131,7 +99,7 @@ const ActiveOrders = () => {
                 </p>
               </div>
               <Link
-                to={`/order-tracking/${order.id}`}
+                to={`/order-tracking/${order.routeId || order.id}`}
                 className="text-sm font-medium text-[#2c4a7d] hover:text-[#415a81] transition-colors"
               >
                 View Details
