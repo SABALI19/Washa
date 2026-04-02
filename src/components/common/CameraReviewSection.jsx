@@ -383,7 +383,7 @@ const CameraReviewSection = ({
       </div>
 
       {isCameraActive && isFullscreenPreview && (
-        <div className="fixed inset-0 z-[100] bg-black md:hidden">
+        <div className="fixed inset-0 z-[100] bg-black">
           <button
             type="button"
             onClick={() => setIsFullscreenPreview(false)}
