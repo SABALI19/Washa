@@ -1,8 +1,9 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { getAuthSession, getDashboardPathForRole } from "../../utils/auth.js";
+import useAuthSession from "../../hooks/useAuthSession.js";
+import { getDashboardPathForRole } from "../../utils/auth.js";
 
 const PublicOnlyRoute = () => {
-  const session = getAuthSession();
+  const session = useAuthSession();
   const userRole = session?.user?.role;
 
   if (userRole) {

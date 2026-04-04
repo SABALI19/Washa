@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { apiRequest, getAuthSession } from "../utils/auth.js";
+import useAuthSession from "./useAuthSession.js";
+import { apiRequest } from "../utils/auth.js";
 
 const useCustomerOrders = () => {
+  const session = useAuthSession();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,11 +13,10 @@ const useCustomerOrders = () => {
     let isMounted = true;
 
     const loadOrders = async () => {
-      const session = getAuthSession();
-
       if (!session?.token) {
         if (isMounted) {
           setOrders([]);
+          setError("");
           setIsLoading(false);
         }
         return;
@@ -46,7 +47,7 @@ const useCustomerOrders = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [session?.token]);
 
   return { orders, isLoading, error };
 };

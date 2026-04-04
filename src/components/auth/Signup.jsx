@@ -17,10 +17,10 @@ import { Link, useNavigate } from "react-router-dom";
 import laundry3Image from "../../assets/images/laundry3.jpg";
 import laundry8Image from "../../assets/images/laundry8.jpg";
 import logoBlue from "../../assets/logo/washa-logo-blue.png";
+import useAuthSession from "../../hooks/useAuthSession.js";
 import {
   apiRequest,
   customerTypeLabelMap,
-  getAuthSession,
   saveAuthSession,
 } from "../../utils/auth.js";
 
@@ -35,6 +35,7 @@ const trustHighlights = [
 
 const Signup = () => {
   const navigate = useNavigate();
+  const session = useAuthSession();
   const [selectedCustomerType, setSelectedCustomerType] = useState(
     customerTypes[0],
   );
@@ -50,12 +51,10 @@ const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const session = getAuthSession();
-
     if (session?.user?.role === "customer") {
       navigate("/dashboard/customer", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, session]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -93,10 +92,11 @@ const Signup = () => {
           password,
           role: "customer",
           customerType: customerTypeLabelMap[selectedCustomerType],
+          rememberMe: true,
         }),
       });
 
-      saveAuthSession(data);
+      saveAuthSession(data, { rememberMe: true });
       navigate("/dashboard/customer", { replace: true });
     } catch (error) {
       setErrorMessage(error.message);

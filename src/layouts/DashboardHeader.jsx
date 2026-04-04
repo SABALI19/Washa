@@ -3,7 +3,8 @@ import { ArrowLeft, Bell, ChevronDown } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import washaLogo from "../assets/logo/washa-logo-blue.png";
 import Profile from "../components/common/Profile";
-import { getAuthSession, getDashboardPathForRole } from "../utils/auth.js";
+import useAuthSession from "../hooks/useAuthSession.js";
+import { getDashboardPathForRole } from "../utils/auth.js";
 
 const defaultNavigationItems = [
   { name: "Dashboard", href: "/dashboard/customer" },
@@ -31,7 +32,7 @@ const DashboardHeader = ({
 }) => {
   const location = useLocation();
   const { orderId } = useParams();
-  const storedSession = getAuthSession();
+  const storedSession = useAuthSession();
   const isTrackingVariant = variant === "orderTracking";
   const resolvedUser =
     storedSession?.user || user

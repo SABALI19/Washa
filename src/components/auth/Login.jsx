@@ -13,11 +13,12 @@ import { Link, useNavigate } from "react-router-dom";
 import laundry3Image from "../../assets/images/laundry3.jpg";
 import laundry8Image from "../../assets/images/laundry8.jpg";
 import logoBlue from "../../assets/logo/washa-logo-blue.png";
+import useAuthSession from "../../hooks/useAuthSession.js";
 import {
   accountRoleLabelMap,
   apiRequest,
-  getAuthSession,
   getDashboardPathForRole,
+  getSessionPolicyForRole,
   saveAuthSession,
 } from "../../utils/auth.js";
 
@@ -31,6 +32,7 @@ const experiencePoints = [
 
 const Login = () => {
   const navigate = useNavigate();
+  const session = useAuthSession();
   const [selectedRole, setSelectedRole] = useState(accountRoles[0]);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -39,13 +41,14 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const session = getAuthSession();
+  const selectedRoleValue = accountRoleLabelMap[selectedRole];
+  const sessionPolicy = getSessionPolicyForRole(selectedRoleValue);
 
+  useEffect(() => {
     if (session?.user?.role) {
       navigate(getDashboardPathForRole(session.user.role), { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, session]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -64,11 +67,14 @@ const Login = () => {
         body: JSON.stringify({
           email: email.trim(),
           password,
-          role: accountRoleLabelMap[selectedRole],
+          role: selectedRoleValue,
+          rememberMe,
         }),
       });
 
-      saveAuthSession(data);
+      saveAuthSession(data, {
+        rememberMe: selectedRoleValue === "customer" ? rememberMe : true,
+      });
       navigate(getDashboardPathForRole(data.user.role), { replace: true });
     } catch (error) {
       setErrorMessage(error.message);
@@ -180,14 +186,21 @@ const Login = () => {
               />
 
               <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2">
+                <label
+                  className={`flex items-center gap-2 ${
+                    sessionPolicy.checkboxDisabled ? "opacity-70" : ""
+                  }`}
+                >
                   <input
                     type="checkbox"
-                    checked={rememberMe}
+                    checked={sessionPolicy.checkboxDisabled ? true : rememberMe}
                     onChange={() => setRememberMe((value) => !value)}
+                    disabled={sessionPolicy.checkboxDisabled}
                     className="h-3.5 w-3.5 rounded border-slate-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                   />
-                  <span className="text-[0.68rem] text-slate-500">Remember me</span>
+                  <span className="text-[0.68rem] text-slate-500">
+                    {sessionPolicy.checkboxLabel}
+                  </span>
                 </label>
 
                 <button
@@ -197,6 +210,7 @@ const Login = () => {
                   Forgot password?
                 </button>
               </div>
+              <p className="text-[0.68rem] text-slate-400">{sessionPolicy.helperText}</p>
 
               {errorMessage && (
                 <p className="text-[0.72rem] font-medium text-red-500">{errorMessage}</p>

@@ -1,8 +1,9 @@
 import React from "react";
-import { getAuthSession } from "../../utils/auth.js";
+
+import useAuthSession from "../../hooks/useAuthSession.js";
 
 const UserWelcome = () => {
-  const session = getAuthSession();
+  const session = useAuthSession();
   const firstName = session?.user?.name?.split(" ")[0] || "Sarah";
 
   return (

@@ -1,9 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { getAuthSession, getDashboardPathForRole } from "../../utils/auth.js";
+import useAuthSession from "../../hooks/useAuthSession.js";
+import { getDashboardPathForRole } from "../../utils/auth.js";
 
 const RequireAuth = ({ allowedRoles = [] }) => {
   const location = useLocation();
-  const session = getAuthSession();
+  const session = useAuthSession();
   const userRole = session?.user?.role;
 
   if (!userRole) {
