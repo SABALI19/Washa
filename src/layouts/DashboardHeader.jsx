@@ -143,7 +143,7 @@ const DashboardHeader = ({
           <div className="flex flex-col gap-2 border-t border-slate-100 py-3 md:hidden">
             <Link
               to={backLink}
-              className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-[#2c4a7d]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-gray-400 transition-colors hover:text-[#2c4a7d]"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>{backLabel}</span>
@@ -151,7 +151,7 @@ const DashboardHeader = ({
             {resolvedMetaValue && (
               <p className="text-sm text-gray-500">
                 {metaLabel ? `${metaLabel}: ` : ""}
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-[#2c4a7d]">
                   {resolvedMetaValue}
                 </span>
               </p>
@@ -176,7 +176,7 @@ const DashboardHeader = ({
             </div>
             {headerInlineContent && <div className="mt-3">{headerInlineContent}</div>}
             {headerUtilityContent && <div className="mt-3">{headerUtilityContent}</div>}
-            {(headerActionLabel || showNotificationBell) && (
+            {headerActionLabel && (
               <div className="mt-3 flex items-center gap-3">
                 {headerActionLabel && (
                   <Button
@@ -188,19 +188,6 @@ const DashboardHeader = ({
                     <span>{headerActionLabel}</span>
                     {headerActionHasChevron && <ChevronDown className="h-4 w-4" />}
                   </Button>
-                )}
-                {showNotificationBell && (
-                  <button
-                    type="button"
-                    className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)]"
-                  >
-                    <Bell className="h-5 w-5" />
-                    {notificationCount > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-xs font-semibold text-white">
-                        {notificationCount}
-                      </span>
-                    )}
-                  </button>
                 )}
               </div>
             )}
