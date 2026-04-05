@@ -78,7 +78,7 @@ const LandingPageHeader = () => {
           aria-expanded={isMobileMenuOpen}
           aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           onClick={() => setIsMobileMenuOpen((value) => !value)}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#2c4a7d] shadow-sm transition-colors hover:border-[#2c4a7d] md:hidden"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#2c4a7d] shadow-sm transition-colors hover:border-[#2c4a7d] md:hidden"
         >
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
