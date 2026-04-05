@@ -552,7 +552,7 @@ const StaffDashboard = () => {
           </div>
 
           <div className="mt-10">
-            <h2 className="text-[1.2rem] font-semibold text-slate-900">
+            <h2 className="text-[1.2rem] font-semibold text-[#2c4a7d]">
               Scheduled Pickups
             </h2>
 
