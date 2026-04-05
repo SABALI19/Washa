@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   Clock3,
   Cog,
+  Mail,
+  MessageSquare,
   PackageCheck,
   Phone,
   Plus,
@@ -54,7 +56,116 @@ const quickActions = [
   },
 ];
 
+const fallbackCapacitySlots = [
+  { id: "morning", label: "Morning", capacity: 8 },
+  { id: "afternoon", label: "Afternoon", capacity: 10 },
+  { id: "evening", label: "Evening", capacity: 6 },
+];
+
 const getTodayDateValue = () => new Date().toISOString().split("T")[0];
+
+const pickFirstNumber = (...values) => {
+  for (const value of values) {
+    const parsedValue = Number(value);
+
+    if (Number.isFinite(parsedValue) && parsedValue >= 0) {
+      return parsedValue;
+    }
+  }
+
+  return null;
+};
+
+const parseCapacityFromText = (value) => {
+  const match = String(value || "").match(/(\d+)\s*(?:of|\/)\s*(\d+)/i);
+
+  if (!match) {
+    return { capacity: null, filled: null };
+  }
+
+  return {
+    filled: Number(match[1]),
+    capacity: Number(match[2]),
+  };
+};
+
+const getSlotLabel = (value, index) => {
+  const normalizedLabel = String(value || "")
+    .replace(/\s*slot\s*\(.*/i, "")
+    .replace(/\s*\(.*/i, "")
+    .trim();
+
+  if (normalizedLabel) {
+    return normalizedLabel;
+  }
+
+  return `Slot ${index + 1}`;
+};
+
+const fallbackCapacityMap = new Map(
+  fallbackCapacitySlots.map((slot) => [slot.label.toLowerCase(), slot.capacity]),
+);
+
+const normalizeCapacitySlot = (slot, index) => {
+  const label = getSlotLabel(slot.label || slot.name || slot.slotLabel || slot.title, index);
+  const parsedCapacity = parseCapacityFromText(slot.fillText || slot.utilizationText);
+  const filled = pickFirstNumber(
+    slot.filledSlots,
+    slot.filled,
+    slot.scheduledCount,
+    slot.usedSlots,
+    slot.orders?.length,
+    parsedCapacity.filled,
+    0,
+  );
+  const capacity = pickFirstNumber(
+    slot.capacity,
+    slot.totalSlots,
+    slot.slotCapacity,
+    slot.maxCapacity,
+    parsedCapacity.capacity,
+    fallbackCapacityMap.get(label.toLowerCase()),
+    filled,
+    0,
+  );
+  const available = Math.max(
+    pickFirstNumber(slot.availableSlots, slot.openSlots, slot.remainingSlots, capacity - filled, 0),
+    0,
+  );
+  const isBlocked = Boolean(
+    slot.isBlocked ||
+      slot.blocked ||
+      /blocked/i.test(String(slot.statusText || slot.status || slot.blockedText || "")),
+  );
+  const isCurrent = Boolean(
+    slot.isCurrent || /current/i.test(String(slot.statusText || slot.status || "")),
+  );
+
+  let statusLabel = `${available} slots open`;
+
+  if (isBlocked) {
+    statusLabel = "Blocked";
+  } else if (isCurrent) {
+    statusLabel = "Current slot";
+  } else if (capacity > 0 && filled >= capacity) {
+    statusLabel = "Full";
+  } else if (available === 1) {
+    statusLabel = "1 slot open";
+  }
+
+  return {
+    id: slot.id || slot.key || label.toLowerCase().replace(/\s+/g, "-"),
+    label,
+    filled,
+    capacity,
+    available,
+    utilization: capacity > 0 ? Math.min(Math.round((filled / capacity) * 100), 100) : 0,
+    statusLabel,
+    isBlocked,
+    isCurrent,
+    blockReason: String(slot.blockReason || slot.blockText || slot.blockedText || "").trim(),
+  };
+};
 
 const mergePickupSections = (liveSections = [], fallbackSections = []) => {
   const sectionMap = new Map();
@@ -86,6 +197,10 @@ const buildFallbackSchedule = () => ({
   selectedDate: new Date().toISOString(),
   statCards: fallbackStatCards,
   scheduleSections: fallbackScheduleSections,
+  capacityManagement: {
+    slots: fallbackCapacitySlots,
+    specialHoursLabel: "",
+  },
 });
 
 const mergePickupScheduleData = (liveSchedule) => {
@@ -109,41 +224,130 @@ const mergePickupScheduleData = (liveSchedule) => {
       liveSchedule?.scheduleSections || [],
       fallbackSchedule.scheduleSections,
     ),
+    capacityManagement: liveSchedule?.capacityManagement || fallbackSchedule.capacityManagement,
   };
 };
 
-const getContactTarget = (pickup) => {
-  const phone = String(pickup.contactPhone || pickup.phone || "").trim();
-  const email = String(pickup.contactEmail || "").trim();
+const getContactPhone = (pickup) =>
+  String(pickup.contactPhone || pickup.phone || pickup.customerPhone || "").trim();
+
+const getContactEmail = (pickup) =>
+  String(pickup.contactEmail || pickup.email || pickup.customerEmail || "").trim();
+
+const getDialablePhone = (value) => {
+  const rawValue = String(value || "").trim();
+
+  if (!rawValue) {
+    return "";
+  }
+
+  const digitsOnly = rawValue.replace(/\D/g, "");
+
+  if (!digitsOnly) {
+    return "";
+  }
+
+  return rawValue.startsWith("+") ? `+${digitsOnly}` : digitsOnly;
+};
+
+const getContactSummary = (pickup) =>
+  [getContactPhone(pickup), getContactEmail(pickup)].filter(Boolean).join(" | ");
+
+const getCustomerContactActions = (pickup) => {
+  const phone = getDialablePhone(getContactPhone(pickup));
+  const email = getContactEmail(pickup);
+  const actions = [];
 
   if (phone) {
-    return {
-      href: `tel:${phone.replace(/[^\d+]/g, "")}`,
-      label: "Call Customer",
-    };
+    actions.push({
+      id: "call",
+      href: `tel:${phone}`,
+      label: "Call",
+      Icon: Phone,
+    });
+    actions.push({
+      id: "text",
+      href: `sms:${phone}`,
+      label: "Text",
+      Icon: MessageSquare,
+    });
   }
 
   if (email) {
-    return {
+    actions.push({
+      id: "email",
       href: `mailto:${email}`,
-      label: "Email Customer",
-    };
+      label: "Email",
+      Icon: Mail,
+    });
   }
 
+  return actions;
+};
+
+const launchContactAction = (href) => {
+  if (href && typeof window !== "undefined") {
+    window.location.href = href;
+  }
+};
+
+const buildCapacitySummary = (pickupSchedule, resolvedPickupSchedule) => {
+  const rawSlots = Array.isArray(pickupSchedule?.capacityManagement?.slots)
+    ? pickupSchedule.capacityManagement.slots
+    : resolvedPickupSchedule.scheduleSections;
+  const slots = rawSlots.map(normalizeCapacitySlot);
+  const totalCapacity = slots.reduce((sum, slot) => sum + slot.capacity, 0);
+  const totalFilled = slots.reduce((sum, slot) => sum + slot.filled, 0);
+  const totalAvailable = slots.reduce((sum, slot) => sum + slot.available, 0);
+  const blockedSlots = slots.filter((slot) => slot.isBlocked);
+  const currentSlot = slots.find((slot) => slot.isCurrent);
+  const specialHours = pickupSchedule?.capacityManagement?.specialHours;
+  const specialHoursLabel = String(
+    pickupSchedule?.capacityManagement?.specialHoursLabel ||
+      pickupSchedule?.capacityManagement?.specialHoursText ||
+      "",
+  ).trim();
+
   return {
-    href: "",
-    label: "Contact Unavailable",
+    slots,
+    totalCapacity,
+    totalFilled,
+    totalAvailable,
+    blockedSlots,
+    currentSlotLabel: currentSlot?.label || "No active slot",
+    utilization: totalCapacity > 0 ? Math.round((totalFilled / totalCapacity) * 100) : 0,
+    blockSummary:
+      String(
+        pickupSchedule?.capacityManagement?.blockSummary ||
+          pickupSchedule?.capacityManagement?.blockText ||
+          "",
+      ).trim() ||
+      (blockedSlots.length > 0
+        ? `${blockedSlots.length} pickup window${blockedSlots.length > 1 ? "s are" : " is"} currently blocked in the workflow.`
+        : "All pickup windows are currently open to new bookings."),
+    specialHoursText:
+      specialHoursLabel ||
+      (Array.isArray(specialHours) && specialHours.length > 0
+        ? specialHours
+            .map((entry) => String(entry.label || entry.text || entry.name || "").trim())
+            .filter(Boolean)
+            .join(", ")
+        : "No special-hour overrides are scheduled for this date."),
+    syncedAt: pickupSchedule?.capacityManagement?.updatedAt || resolvedPickupSchedule.generatedAt,
   };
 };
 
 const PickupSchedule = () => {
-  const [blockTimeSlot, setBlockTimeSlot] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayDateValue());
   const dateInputRef = useRef(null);
   const { pickupSchedule, isLoading, error } = useStaffPickupSchedule(selectedDate);
   const resolvedPickupSchedule = useMemo(
     () => mergePickupScheduleData(pickupSchedule),
     [pickupSchedule],
+  );
+  const capacitySummary = useMemo(
+    () => buildCapacitySummary(pickupSchedule, resolvedPickupSchedule),
+    [pickupSchedule, resolvedPickupSchedule],
   );
 
   return (
@@ -223,7 +427,8 @@ const PickupSchedule = () => {
 
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {resolvedPickupSchedule.overduePickups.map((pickup) => {
-                const contactTarget = getContactTarget(pickup);
+                const customerContactActions = getCustomerContactActions(pickup);
+                const contactSummary = getContactSummary(pickup);
 
                 return (
                   <article
@@ -251,27 +456,33 @@ const PickupSchedule = () => {
                             {pickup.items} items
                           </span>
                         </div>
-                        {(pickup.contactPhone || pickup.contactEmail) && (
+                        {contactSummary && (
                           <p className="mt-3 text-[0.76rem] text-slate-500">
-                            {pickup.contactPhone || pickup.contactEmail}
+                            {contactSummary}
                           </p>
                         )}
                       </div>
 
-                      <Button
-                        variant="primary"
-                        size="md"
-                        disabled={!contactTarget.href}
-                        onClick={() => {
-                          if (contactTarget.href && typeof window !== "undefined") {
-                            window.location.href = contactTarget.href;
-                          }
-                        }}
-                        className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
-                      >
-                        <Phone className="h-3.5 w-3.5" />
-                        <span className="whitespace-nowrap font-roboto">{contactTarget.label}</span>
-                      </Button>
+                      <div className="flex flex-wrap gap-2 md:justify-end">
+                        {customerContactActions.length > 0 ? (
+                          customerContactActions.map((action, index) => (
+                            <Button
+                              key={`${pickup.id}-${action.id}`}
+                              variant={index === 0 ? "primary" : "secondary"}
+                              size="md"
+                              onClick={() => launchContactAction(action.href)}
+                              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
+                            >
+                              <action.Icon className="h-3.5 w-3.5" />
+                              <span className="whitespace-nowrap font-roboto">{action.label}</span>
+                            </Button>
+                          ))
+                        ) : (
+                          <span className="text-[0.78rem] font-medium text-slate-400">
+                            Contact unavailable
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </article>
                 );
@@ -317,7 +528,8 @@ const PickupSchedule = () => {
 
                 <div className="mt-3 space-y-3">
                   {section.orders.map((order) => {
-                    const contactTarget = getContactTarget(order);
+                    const customerContactActions = getCustomerContactActions(order);
+                    const contactSummary = getContactSummary(order);
 
                     return (
                       <article
@@ -332,9 +544,9 @@ const PickupSchedule = () => {
                             <span className="text-[0.95rem] text-slate-700">
                               {order.customer}
                             </span>
-                            <span className="text-[0.76rem] text-slate-500">
-                              {order.contactPhone || order.phone || order.contactEmail || ""}
-                            </span>
+                            {contactSummary && (
+                              <span className="text-[0.76rem] text-slate-500">{contactSummary}</span>
+                            )}
                           </div>
                           <div className="mt-2.5 flex flex-wrap items-center gap-2">
                             <span
@@ -359,18 +571,27 @@ const PickupSchedule = () => {
                         </div>
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                          <button
-                            type="button"
-                            disabled={!contactTarget.href}
-                            onClick={() => {
-                              if (contactTarget.href && typeof window !== "undefined") {
-                                window.location.href = contactTarget.href;
-                              }
-                            }}
-                            className="text-[0.78rem] font-medium text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {contactTarget.label}
-                          </button>
+                          <div className="flex flex-wrap gap-2">
+                            {customerContactActions.length > 0 ? (
+                              customerContactActions.map((action, index) => (
+                                <button
+                                  key={`${order.id}-${action.id}`}
+                                  type="button"
+                                  onClick={() => launchContactAction(action.href)}
+                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-medium ${
+                                    index === 0
+                                      ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                                      : "bg-slate-100 text-slate-600"
+                                  }`}
+                                >
+                                  <action.Icon className="h-3.5 w-3.5" />
+                                  <span>{action.label}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <span className="text-[0.78rem] text-slate-400">No contact method</span>
+                            )}
+                          </div>
                           <Button
                             variant="primary"
                             size="md"
@@ -390,32 +611,80 @@ const PickupSchedule = () => {
 
         <aside className="space-y-5 self-start">
           <section className="rounded-[1.2rem] bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-            <h2 className="text-[1.2rem] font-semibold text-slate-900">
-              Capacity Management
-            </h2>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[1.2rem] font-semibold text-slate-900">
+                  Capacity Management
+                </h2>
+                <p className="mt-1 text-[0.76rem] text-slate-500">
+                  Synced with the live pickup workflow
+                </p>
+              </div>
+              <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
+                {capacitySummary.utilization}% used
+              </span>
+            </div>
 
             <div className="mt-6">
               <h3 className="text-[1rem] font-semibold text-slate-900">
                 Adjust Capacity
               </h3>
 
-              <div className="mt-4 space-y-3">
-                {[
-                  { label: "Morning", value: 8 },
-                  { label: "Afternoon", value: 10 },
-                  { label: "Evening", value: 6 },
-                ].map((slot) => (
-                  <div key={slot.label} className="flex items-center justify-between gap-4">
-                    <span className="text-[0.85rem] text-slate-600">{slot.label}</span>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="text"
-                        value={slot.value}
-                        readOnly
-                        className="h-10 w-16 rounded-xl border border-slate-200 text-center text-[0.9rem] text-slate-700 outline-none"
-                      />
-                      <span className="text-[0.85rem] text-slate-600">slots</span>
+              <div className="mt-4 space-y-4">
+                {capacitySummary.slots.map((slot) => (
+                  <div key={slot.id} className="rounded-[1rem] border border-slate-100 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[0.9rem] font-semibold text-slate-900">{slot.label}</p>
+                        <p className="mt-1 text-[0.76rem] text-slate-500">{slot.statusLabel}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[0.92rem] font-semibold text-[var(--color-primary)]">
+                          {slot.filled}/{slot.capacity}
+                        </p>
+                        <p className="text-[0.72rem] text-slate-500">scheduled</p>
+                      </div>
                     </div>
+                    <div className="mt-3 h-2 rounded-full bg-[var(--color-primary-soft)]">
+                      <div
+                        className={`h-2 rounded-full ${
+                          slot.isBlocked ? "bg-slate-400" : "bg-[var(--color-primary)]"
+                        }`}
+                        style={{ width: `${slot.utilization}%` }}
+                      />
+                    </div>
+                    {slot.blockReason && (
+                      <p className="mt-2 text-[0.72rem] text-slate-500">{slot.blockReason}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                {[
+                  {
+                    label: "Scheduled",
+                    value: capacitySummary.totalFilled,
+                  },
+                  {
+                    label: "Open",
+                    value: capacitySummary.totalAvailable,
+                  },
+                  {
+                    label: "Current",
+                    value: capacitySummary.currentSlotLabel,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[1rem] bg-slate-50 px-3 py-3 text-center"
+                  >
+                    <p className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-slate-500">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-[0.92rem] font-semibold text-slate-900">
+                      {item.value}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -426,40 +695,51 @@ const PickupSchedule = () => {
                 <h3 className="text-[1rem] font-semibold text-slate-900">
                   Block Time Slot
                 </h3>
-                <button
-                  type="button"
-                  aria-pressed={blockTimeSlot}
-                  onClick={() => setBlockTimeSlot((value) => !value)}
-                  className={`relative h-7 w-12 rounded-full transition-colors ${
-                    blockTimeSlot
-                      ? "bg-[var(--color-primary)]"
-                      : "bg-[var(--color-primary-soft)]"
+                <span
+                  className={`rounded-full px-3 py-1 text-[0.72rem] font-semibold ${
+                    capacitySummary.blockedSlots.length > 0
+                      ? "bg-[#f7dada] text-[var(--color-primary)]"
+                      : "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
                   }`}
                 >
-                  <span
-                    className={`absolute top-0.5 h-6 w-6 rounded-full bg-white transition-transform ${
-                      blockTimeSlot ? "translate-x-[1.35rem]" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
+                  {capacitySummary.blockedSlots.length > 0
+                    ? `${capacitySummary.blockedSlots.length} blocked`
+                    : "Open"}
+                </span>
               </div>
               <p className="mt-3 text-[0.8rem] leading-6 text-slate-500">
-                Temporarily block new pickups for selected time slots
+                {capacitySummary.blockSummary}
               </p>
+              {capacitySummary.blockedSlots.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {capacitySummary.blockedSlots.map((slot) => (
+                    <span
+                      key={`blocked-${slot.id}`}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-medium text-slate-600"
+                    >
+                      {slot.label}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-6">
               <h3 className="text-[1rem] font-semibold text-slate-900">
                 Special Hours
               </h3>
-              <Button
-                variant="secondary"
-                size="md"
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.8rem] font-medium"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Configure Special Hours</span>
-              </Button>
+              <div className="mt-4 rounded-[1rem] bg-slate-50 px-4 py-4">
+                <div className="flex items-center gap-2 text-[var(--color-primary)]">
+                  <Plus className="h-4 w-4" />
+                  <span className="text-[0.78rem] font-semibold">Workflow Overrides</span>
+                </div>
+                <p className="mt-2 text-[0.8rem] leading-6 text-slate-500">
+                  {capacitySummary.specialHoursText}
+                </p>
+              </div>
+              <p className="mt-3 text-[0.72rem] text-slate-400">
+                Last synced: {capacitySummary.syncedAt || "Unavailable"}
+              </p>
             </div>
           </section>
 

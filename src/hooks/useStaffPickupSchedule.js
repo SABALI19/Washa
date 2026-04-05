@@ -6,6 +6,7 @@ const useStaffPickupSchedule = (selectedDate) => {
   const [pickupSchedule, setPickupSchedule] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -49,9 +50,15 @@ const useStaffPickupSchedule = (selectedDate) => {
     return () => {
       isMounted = false;
     };
-  }, [selectedDate]);
+  }, [selectedDate, reloadToken]);
 
-  return { pickupSchedule, isLoading, error };
+  return {
+    pickupSchedule,
+    isLoading,
+    error,
+    refreshPickupSchedule: () => setReloadToken((value) => value + 1),
+    setPickupSchedule,
+  };
 };
 
 export default useStaffPickupSchedule;
