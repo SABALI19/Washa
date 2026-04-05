@@ -306,85 +306,92 @@ const OverdueCarousel = ({ pickups }) => {
 
   return (
     <>
-      {/* Mobile (<640px): swipeable snap carousel */}
-      <div className="sm:hidden">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 overscroll-x-contain cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      {/* Mobile (<640px): swipeable snap carousel - ONE CARD AT A TIME */}
+<div className="sm:hidden overflow-hidden">
+  <div
+    ref={scrollRef}
+    onScroll={handleScroll}
+    onPointerDown={handlePointerDown}
+    onPointerMove={handlePointerMove}
+    onPointerUp={handlePointerUp}
+    onPointerCancel={handlePointerUp}
+    className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 overscroll-x-contain cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    style={{ scrollSnapType: "x mandatory" }}
+  >
+    {pickups.map((pickup) => {
+      const customerContactActions = getCustomerContactActions(pickup);
+      const contactSummary = getContactSummary(pickup);
+      return (
+        <article
+          key={`${pickup.id}-${pickup.scheduledDate}`}
+          className="w-[calc(100vw-2rem)] shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
+          style={{ 
+            scrollSnapAlign: "start",
+            marginLeft: "1rem",
+            marginRight: "1rem",
+            width: "calc(100vw - 2rem)"
+          }}
         >
-          {pickups.map((pickup) => {
-            const customerContactActions = getCustomerContactActions(pickup);
-            const contactSummary = getContactSummary(pickup);
-            return (
-              <article
-                key={`${pickup.id}-${pickup.scheduledDate}`}
-                className="w-[calc(100vw-4.25rem)] max-w-[22rem] shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
-              >
-                <div className="flex flex-wrap items-start gap-2">
-                  <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
-                  <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
-                </div>
-                <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
-                  Originally scheduled: {pickup.scheduledDate}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#f7dada] px-2.5 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
-                    {pickup.overdueText}
-                  </span>
-                  <span className="text-[0.78rem] text-slate-600">{pickup.items} items</span>
-                </div>
-                {contactSummary && (
-                  <p className="mt-3 text-[0.76rem] text-slate-500">{contactSummary}</p>
-                )}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {customerContactActions.length > 0 ? (
-                    customerContactActions.map((action, index) => (
-                      <Button
-                        key={`${pickup.id}-${action.id}`}
-                        variant={index === 0 ? "primary" : "secondary"}
-                        size="md"
-                        onClick={() => launchContactAction(action.href)}
-                        className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
-                      >
-                        <action.Icon className="h-3.5 w-3.5" />
-                        <span className="whitespace-nowrap font-roboto">{action.label}</span>
-                      </Button>
-                    ))
-                  ) : (
-                    <span className="text-[0.78rem] font-medium text-slate-400">
-                      Contact unavailable
-                    </span>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {/* Clickable dot indicators */}
-        {pickups.length > 1 && (
-          <div className="mt-3 flex justify-center gap-1.5">
-            {pickups.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                aria-label={`Go to pickup ${index + 1}`}
-                onClick={() => scrollToIndex(index)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === activeIndex
-                    ? "w-5 bg-[var(--color-primary)]"
-                    : "w-1.5 bg-slate-300 hover:bg-slate-400"
-                }`}
-              />
-            ))}
+          <div className="flex flex-wrap items-start gap-2">
+            <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
+            <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
           </div>
-        )}
-      </div>
+          <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
+            Originally scheduled: {pickup.scheduledDate}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-[#f7dada] px-2.5 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
+              {pickup.overdueText}
+            </span>
+            <span className="text-[0.78rem] text-slate-600">{pickup.items} items</span>
+          </div>
+          {contactSummary && (
+            <p className="mt-3 text-[0.76rem] text-slate-500">{contactSummary}</p>
+          )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {customerContactActions.length > 0 ? (
+              customerContactActions.map((action, index) => (
+                <Button
+                  key={`${pickup.id}-${action.id}`}
+                  variant={index === 0 ? "primary" : "secondary"}
+                  size="md"
+                  onClick={() => launchContactAction(action.href)}
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
+                >
+                  <action.Icon className="h-3.5 w-3.5" />
+                  <span className="whitespace-nowrap font-roboto">{action.label}</span>
+                </Button>
+              ))
+            ) : (
+              <span className="text-[0.78rem] font-medium text-slate-400">
+                Contact unavailable
+              </span>
+            )}
+          </div>
+        </article>
+      );
+    })}
+  </div>
+
+  {/* Clickable dot indicators */}
+  {pickups.length > 1 && (
+    <div className="mt-3 flex justify-center gap-1.5">
+      {pickups.map((_, index) => (
+        <button
+          key={index}
+          type="button"
+          aria-label={`Go to pickup ${index + 1}`}
+          onClick={() => scrollToIndex(index)}
+          className={`h-1.5 rounded-full transition-all duration-300 ${
+            index === activeIndex
+              ? "w-5 bg-[var(--color-primary)]"
+              : "w-1.5 bg-slate-300 hover:bg-slate-400"
+          }`}
+        />
+      ))}
+    </div>
+  )}
+</div>
 
       {/* Tablet (640–1023px): single-column stacked rows */}
       <div className="mt-4 hidden flex-col gap-3 sm:flex lg:hidden">
