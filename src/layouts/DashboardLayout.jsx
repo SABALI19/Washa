@@ -39,7 +39,7 @@ const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
     <DashboardLayoutContext.Provider value={layoutValue}>
       <div className="min-h-screen b">
         <DashboardHeader variant={headerVariant} {...headerProps} />
-        <main className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <main className="mx-auto w-full p-8">
           <Outlet />
         </main>
 
