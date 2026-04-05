@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 
 import DashboardHeader from "../layouts/DashboardHeader.jsx";
 
@@ -8,6 +8,7 @@ const DashboardLayoutContext = createContext(null);
 export const useDashboardLayout = () => useContext(DashboardLayoutContext);
 
 const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
+  const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [mobileSidebarContent, setMobileSidebarContent] = useState(null);
   const closeMobileSidebar = useCallback(() => {
@@ -28,6 +29,11 @@ const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
     }),
     [closeMobileSidebar, hasMobileSidebar, isMobileSidebarOpen, openMobileSidebar],
   );
+
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+    setMobileSidebarContent(null);
+  }, [location.pathname]);
 
   return (
     <DashboardLayoutContext.Provider value={layoutValue}>

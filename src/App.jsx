@@ -27,6 +27,11 @@ import {
 } from "lucide-react";
 
 function App() {
+  const staffNavigationItems = [
+    { name: "Staff Dashboard", href: "/staff/dashboard" },
+    { name: "Pickups", href: "/staff/pickups" },
+  ];
+
   const currentHeaderDate = new Intl.DateTimeFormat("en-US", {
     month: "long",
     day: "numeric",
@@ -214,11 +219,7 @@ function App() {
                 <DashboardLayout
                   headerProps={{
                     brandLabel: "LaundryTrack",
-                    navigationItems: [
-                      { name: "Staff Dashboard", href: "/staff/dashboard" },
-                      { name: "Pickups", href: "/staff/pickups" },
-                    ],
-                    headerInlineContent: pickupHeaderInlineContent,
+                    navigationItems: staffNavigationItems,
                     showNotificationBell: true,
                     notificationCount: 3,
                     user: {
@@ -229,6 +230,25 @@ function App() {
               }
             >
               <Route path="/staff/dashboard" element={<StaffDashboard />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["staff", "admin"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                    navigationItems: staffNavigationItems,
+                    headerInlineContent: pickupHeaderInlineContent,
+                    showNotificationBell: true,
+                    notificationCount: 3,
+                    user: {
+                      profileImage: staffUserImage,
+                    },
+                  }}
+                />
+              }
+            >
               <Route path="/staff/pickups" element={<PickupSchedule />} />
             </Route>
           </Route>
