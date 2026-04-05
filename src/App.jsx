@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage.jsx";
 import CustomerDashboard from "./pages/CustomerDashboard.jsx";
@@ -23,16 +22,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Save,
   Search,
   Settings,
 } from "lucide-react";
-
-const verificationCustomerNames = {
-  "LT-2024-0315": "Emily Chen",
-  "LT-2024-0314": "Michael Rodriguez",
-  "LT-2024-0313": "Jessica Park",
-};
 
 function App() {
   const currentHeaderDate = new Intl.DateTimeFormat("en-US", {
@@ -216,7 +208,7 @@ function App() {
               <Route path="/admin/disputes" element={<DisputeManagement />} />
             </Route>
           </Route>
-          <Route element={<RequireAuth allowedRoles={["staff"]} />}>
+          <Route element={<RequireAuth allowedRoles={["staff", "admin"]} />}>
             <Route
               element={
                 <DashboardLayout
@@ -240,7 +232,7 @@ function App() {
               <Route path="/staff/pickups" element={<PickupSchedule />} />
             </Route>
           </Route>
-          <Route element={<RequireAuth allowedRoles={["staff"]} />}>
+          <Route element={<RequireAuth allowedRoles={["staff", "admin"]} />}>
             <Route
               element={
                 <DashboardLayout
@@ -249,13 +241,8 @@ function App() {
                     brandLabel: "LaundryTrack",
                     backLink: "/staff/dashboard",
                     backLabel: "Back to Dashboard",
-                    metaValueFormatter: (orderId) =>
-                      `#${orderId} - ${
-                        verificationCustomerNames[orderId] || "Customer"
-                      }`,
-                    headerActionLabel: "Save Progress",
-                    headerActionIcon: Save,
-                    headerActionHasChevron: false,
+                    metaLabel: "Verification",
+                    metaValueFormatter: (orderId) => `#${orderId}`,
                     user: {
                       profileImage: staffUserImage,
                     },

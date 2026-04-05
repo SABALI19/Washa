@@ -218,33 +218,31 @@ const mergePickupSections = (...sectionGroups) => {
 };
 
 const buildDashboardWithSeedData = (dashboard) => {
-  const combinedPendingVerificationOrders = [
-    ...(dashboard?.pendingVerificationOrders || []),
-    ...dummyPendingVerificationOrders,
-  ];
-  const combinedInProcessOrders = [
-    ...(dashboard?.inProcessOrders || []),
-    ...dummyInProcessOrders,
-  ];
-  const combinedPickupSections = mergePickupSections(
-    dashboard?.pickupSections || [],
-    dummyPickupSections,
-  );
-  const pickupOrders = combinedPickupSections.flatMap((section) => section.orders);
+  const hasLiveDashboard = Boolean(dashboard?.generatedAt);
+  const resolvedPendingVerificationOrders = hasLiveDashboard
+    ? dashboard?.pendingVerificationOrders || []
+    : dummyPendingVerificationOrders;
+  const resolvedInProcessOrders = hasLiveDashboard
+    ? dashboard?.inProcessOrders || []
+    : dummyInProcessOrders;
+  const resolvedPickupSections = hasLiveDashboard
+    ? dashboard?.pickupSections || []
+    : dummyPickupSections;
+  const pickupOrders = resolvedPickupSections.flatMap((section) => section.orders);
   const trackedOrderIds = new Set([
-    ...combinedPendingVerificationOrders.map((order) => order.id),
-    ...combinedInProcessOrders.map((order) => order.id),
+    ...resolvedPendingVerificationOrders.map((order) => order.id),
+    ...resolvedInProcessOrders.map((order) => order.id),
     ...pickupOrders.map((order) => order.id),
   ]);
 
   return {
     generatedAt: dashboard?.generatedAt || new Date().toISOString(),
-    inProcessOrders: combinedInProcessOrders,
-    pendingVerificationOrders: combinedPendingVerificationOrders,
-    pickupSections: combinedPickupSections,
+    inProcessOrders: resolvedInProcessOrders,
+    pendingVerificationOrders: resolvedPendingVerificationOrders,
+    pickupSections: resolvedPickupSections,
     quickActions: [
       {
-        count: combinedPendingVerificationOrders.length,
+        count: resolvedPendingVerificationOrders.length,
         id: "scan",
         label: "Scan Order QR Code",
         variant: "primary",
@@ -269,12 +267,12 @@ const buildDashboardWithSeedData = (dashboard) => {
         label: "All Orders",
       },
       {
-        count: combinedPendingVerificationOrders.length,
+        count: resolvedPendingVerificationOrders.length,
         key: "pending",
         label: "Needs Verification",
       },
       {
-        count: combinedInProcessOrders.length,
+        count: resolvedInProcessOrders.length,
         key: "in-progress",
         label: "In Process",
       },
@@ -293,11 +291,11 @@ const buildDashboardWithSeedData = (dashboard) => {
     summaryItems: [
       {
         label: "Pending verification",
-        value: combinedPendingVerificationOrders.length,
+        value: resolvedPendingVerificationOrders.length,
       },
       {
         label: "In-process orders",
-        value: combinedInProcessOrders.length,
+        value: resolvedInProcessOrders.length,
       },
       {
         label: "Ready for pickup",
