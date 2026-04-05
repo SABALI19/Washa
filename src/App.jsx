@@ -42,29 +42,38 @@ function App() {
   }).format(new Date());
 
   const pickupHeaderInlineContent = (
-    <div className="flex items-center gap-6 text-sm">
-      {pickupScheduleTotalScheduled > 5 && (
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span>Previous</span>
-        </button>
-      )}
-      <p className="text-[1.1rem] font-semibold text-slate-900">
-        {currentHeaderDate}
-      </p>
-      {pickupScheduleTotalScheduled > 5 && (
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
-        >
-          <span>Next</span>
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
-    </div>
+    <>
+      <div className="hidden items-center gap-6 text-sm md:flex">
+        {pickupScheduleTotalScheduled > 5 && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Previous</span>
+          </button>
+        )}
+        <p className="text-[1.1rem] font-semibold text-slate-900">
+          {currentHeaderDate}
+        </p>
+        {pickupScheduleTotalScheduled > 5 && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
+          >
+            <span>Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <button
+        type="button"
+        className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[0.68rem] font-medium text-slate-600 shadow-sm md:hidden"
+      >
+        <span className="whitespace-nowrap">{currentHeaderDate}</span>
+      </button>
+    </>
   );
 
   const adminSearchUtility = (

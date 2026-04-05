@@ -1,8 +1,10 @@
 import Button from "../../components/Button";
+import { useEffect } from "react";
 import QuickActions from "./QuickActions.jsx";
 import Quickfilter from "./Quickfilter.jsx";
 import ShiftInformation from "./ShiftInformation.jsx";
 import TodaySummary from "./TodaySummary.jsx";
+import { useDashboardLayout } from "../DashboardLayout.jsx";
 import jacketImage from "../../assets/images/jacket.jpg";
 import laundry1Image from "../../assets/images/laundry1.jpg";
 import laundry2Image from "../../assets/images/laundry2.jpg";
@@ -148,6 +150,23 @@ const pickupSections = [
 ];
 
 const StaffDashboard = () => {
+  const dashboardLayout = useDashboardLayout();
+  const setMobileSidebarContent = dashboardLayout?.setMobileSidebarContent;
+  const closeMobileSidebar = dashboardLayout?.closeMobileSidebar;
+
+  useEffect(() => {
+    if (!setMobileSidebarContent) {
+      return undefined;
+    }
+
+    setMobileSidebarContent(<QuickActions />);
+
+    return () => {
+      setMobileSidebarContent(null);
+      closeMobileSidebar?.();
+    };
+  }, [closeMobileSidebar, setMobileSidebarContent]);
+
   return (
     <section className="mx-auto w-full max-w-[1450px]">
       <div className="grid gap-8 xl:grid-cols-[270px_minmax(0,1fr)_280px]">
@@ -355,7 +374,7 @@ const StaffDashboard = () => {
           </div>
         </div>
 
-        <div>
+        <div className="hidden xl:block">
           <QuickActions />
         </div>
       </div>

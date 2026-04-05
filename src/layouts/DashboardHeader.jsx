@@ -1,9 +1,10 @@
 import Button from "../components/Button";
-import { ArrowLeft, Bell, ChevronDown } from "lucide-react";
+import { ArrowLeft, Bell, ChevronDown, PanelRightOpen } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import washaLogo from "../assets/logo/washa-logo-blue.png";
 import Profile from "../components/common/Profile";
 import useAuthSession from "../hooks/useAuthSession.js";
+import { useDashboardLayout } from "./DashboardLayout.jsx";
 import { getDashboardPathForRole } from "../utils/auth.js";
 
 const defaultNavigationItems = [
@@ -33,6 +34,7 @@ const DashboardHeader = ({
   const location = useLocation();
   const { orderId } = useParams();
   const storedSession = useAuthSession();
+  const dashboardLayout = useDashboardLayout();
   const isTrackingVariant = variant === "orderTracking";
   const resolvedUser =
     storedSession?.user || user
@@ -83,7 +85,7 @@ const DashboardHeader = ({
               </div>
             ) : (
               <nav className="hidden space-x-1 md:flex">
-                {navigationItems.map((item) => (
+              {navigationItems.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
@@ -159,22 +161,36 @@ const DashboardHeader = ({
           </div>
         ) : (
           <div className="py-2 md:hidden">
-            <div className="flex space-x-2 overflow-x-auto">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ${
-                    location.pathname === item.href
-                      ? "bg-[#2c4a7d] text-white"
-                      : "bg-gray-100 text-[#2c4a7d]"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 space-x-2 overflow-x-auto">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`whitespace-nowrap rounded-md px-2.5 py-1 text-[0.78rem] font-medium ${
+                      location.pathname === item.href
+                        ? "bg-[#2c4a7d] text-white"
+                        : "bg-gray-100 text-[#2c4a7d]"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {headerInlineContent && <div>{headerInlineContent}</div>}
+                {dashboardLayout?.hasMobileSidebar && (
+                  <button
+                    type="button"
+                    onClick={dashboardLayout.openMobileSidebar}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                    aria-label="Open staff sidebar"
+                  >
+                    <PanelRightOpen className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
-            {headerInlineContent && <div className="mt-3">{headerInlineContent}</div>}
             {headerUtilityContent && <div className="mt-3">{headerUtilityContent}</div>}
             {headerActionLabel && (
               <div className="mt-3 flex items-center gap-3">
