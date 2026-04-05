@@ -306,7 +306,7 @@ const OverdueCarousel = ({ pickups }) => {
 
   return (
     <>
-      {/* Mobile: swipeable snap carousel */}
+      {/* Mobile (<640px): swipeable snap carousel */}
       <div className="sm:hidden">
         <div
           ref={scrollRef}
@@ -386,8 +386,61 @@ const OverdueCarousel = ({ pickups }) => {
         )}
       </div>
 
-      {/* Tablet/Desktop: original grid layout */}
-      <div className="mt-4 hidden gap-3 sm:grid sm:grid-cols-1 lg:grid-cols-2">
+      {/* Tablet (640–1023px): single-column stacked rows */}
+      <div className="mt-4 hidden flex-col gap-3 sm:flex lg:hidden">
+        {pickups.map((pickup) => {
+          const customerContactActions = getCustomerContactActions(pickup);
+          const contactSummary = getContactSummary(pickup);
+          return (
+            <article
+              key={`${pickup.id}-${pickup.scheduledDate}`}
+              className="flex flex-row items-start justify-between gap-4 rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-start gap-2">
+                  <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
+                  <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
+                </div>
+                <p className="mt-2 text-[0.78rem] leading-5 text-slate-500">
+                  Originally scheduled: {pickup.scheduledDate}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-[#f7dada] px-2.5 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
+                    {pickup.overdueText}
+                  </span>
+                  <span className="text-[0.78rem] text-slate-600">{pickup.items} items</span>
+                </div>
+                {contactSummary && (
+                  <p className="mt-2 text-[0.76rem] text-slate-500">{contactSummary}</p>
+                )}
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {customerContactActions.length > 0 ? (
+                  customerContactActions.map((action, index) => (
+                    <Button
+                      key={`${pickup.id}-${action.id}`}
+                      variant={index === 0 ? "primary" : "secondary"}
+                      size="md"
+                      onClick={() => launchContactAction(action.href)}
+                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
+                    >
+                      <action.Icon className="h-3.5 w-3.5" />
+                      <span className="whitespace-nowrap font-roboto">{action.label}</span>
+                    </Button>
+                  ))
+                ) : (
+                  <span className="text-[0.78rem] font-medium text-slate-400">
+                    Contact unavailable
+                  </span>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {/* Desktop (≥1024px): 2-column grid */}
+      <div className="mt-4 hidden gap-3 lg:grid lg:grid-cols-2">
         {pickups.map((pickup) => {
           const customerContactActions = getCustomerContactActions(pickup);
           const contactSummary = getContactSummary(pickup);
@@ -396,8 +449,8 @@ const OverdueCarousel = ({ pickups }) => {
               key={`${pickup.id}-${pickup.scheduledDate}`}
               className="rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-start gap-2">
                     <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
                     <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
@@ -415,7 +468,7 @@ const OverdueCarousel = ({ pickups }) => {
                     <p className="mt-3 text-[0.76rem] text-slate-500">{contactSummary}</p>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 md:justify-end">
+                <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
                   {customerContactActions.length > 0 ? (
                     customerContactActions.map((action, index) => (
                       <Button
@@ -458,26 +511,27 @@ const PickupSchedule = () => {
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1500px]">
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-        <div className="space-y-6">
+    <section className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-8">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-8 xl:items-start">
+        <div className="space-y-5 sm:space-y-6">
 
           {/* Header */}
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div>
-              <h1 className="text-[1.6rem] font-semibold tracking-[-0.03em] text-[#2c4a7d]">
+              <h1 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#2c4a7d] sm:text-[1.6rem]">
                 Pickup Schedule
               </h1>
-              <p className="mt-1 text-[0.8rem] text-slate-500">
+              <p className="mt-1 text-[0.76rem] text-slate-500 sm:text-[0.8rem]">
                 Workflow-synced schedule for {selectedDate}
               </p>
             </div>
-            <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:gap-3">
+            {/* 3-col grid on mobile, inline row on sm+ */}
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2">
               <Button
                 variant="primary"
                 size="md"
                 onClick={() => setSelectedDate(getTodayDateValue())}
-                className="min-w-0 w-full rounded-xl px-2 py-2 text-[0.72rem] font-semibold sm:px-4 sm:text-[0.8rem]"
+                className="w-full rounded-xl px-2 py-2 text-[0.7rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.8rem]"
               >
                 Today
               </Button>
@@ -485,17 +539,17 @@ const PickupSchedule = () => {
                 variant="secondary"
                 size="md"
                 onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
-                className="inline-flex min-w-0 w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[0.72rem] font-medium sm:gap-2 sm:px-4 sm:text-[0.8rem]"
+                className="inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[0.7rem] font-medium sm:w-auto sm:gap-2 sm:px-4 sm:text-[0.8rem]"
               >
-                <CalendarDays className="h-4 w-4" />
+                <CalendarDays className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 <span className="truncate">Date Picker</span>
               </Button>
               <Button
                 variant="secondary"
                 size="md"
-                className="inline-flex min-w-0 w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[0.72rem] font-medium sm:gap-2 sm:px-4 sm:text-[0.8rem]"
+                className="inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[0.7rem] font-medium sm:w-auto sm:gap-2 sm:px-4 sm:text-[0.8rem]"
               >
-                <Cog className="h-4 w-4" />
+                <Cog className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 <span className="truncate">Manage Time Slots</span>
               </Button>
               <input
@@ -522,32 +576,34 @@ const PickupSchedule = () => {
 
           {/* Overdue Pickups */}
           <section className="rounded-[1.35rem] bg-[#f7dada] p-4 shadow-[0_6px_24px_rgba(15,23,42,0.06)]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <AlertTriangle className="h-4 w-4 text-[var(--color-primary)]" />
-                <h2 className="text-[0.98rem] font-semibold text-[var(--color-primary)]">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
+                <h2 className="text-[0.92rem] font-semibold text-[var(--color-primary)] sm:text-[0.98rem]">
                   Past Due Pickups
                 </h2>
               </div>
-              <p className="text-[0.82rem] font-semibold text-[var(--color-primary)]">
+              <p className="shrink-0 text-[0.8rem] font-semibold text-[var(--color-primary)] sm:text-[0.82rem]">
                 {resolvedPickupSchedule.overduePickups.length} overdue
               </p>
             </div>
             <OverdueCarousel pickups={resolvedPickupSchedule.overduePickups} />
           </section>
 
-          {/* Stat Cards */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Stat Cards — 2 cols on mobile, 4 cols on lg+ */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {resolvedPickupSchedule.statCards.map((card) => (
               <article
                 key={card.id}
-                className="rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100"
+                className="rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-4"
               >
-                <div className="flex items-center gap-3">
-                  {card.Icon && <card.Icon className="h-4 w-4 text-[var(--color-primary)]" />}
-                  <p className="text-[0.82rem] text-slate-500">{card.label}</p>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {card.Icon && (
+                    <card.Icon className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)] sm:h-4 sm:w-4" />
+                  )}
+                  <p className="text-[0.74rem] text-slate-500 sm:text-[0.82rem]">{card.label}</p>
                 </div>
-                <p className="mt-3 text-[1.7rem] font-semibold tracking-[-0.03em] text-[var(--color-primary)]">
+                <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.03em] text-[var(--color-primary)] sm:mt-3 sm:text-[1.7rem]">
                   {card.value}
                 </p>
               </article>
@@ -555,17 +611,19 @@ const PickupSchedule = () => {
           </div>
 
           {/* Schedule Sections */}
-          <div className="mt-8 space-y-7">
+          <div className="space-y-6 sm:space-y-7">
             {resolvedPickupSchedule.scheduleSections.map((section) => (
               <section key={section.id || section.title}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-[1.2rem] font-semibold text-slate-900">{section.title}</h2>
-                    <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.78rem] font-semibold text-[var(--color-primary)]">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <h2 className="text-[1rem] font-semibold text-slate-900 sm:text-[1.2rem]">
+                      {section.title}
+                    </h2>
+                    <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.74rem] font-semibold text-[var(--color-primary)] sm:text-[0.78rem]">
                       {section.fillText}
                     </span>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-[0.72rem] font-semibold ${section.statusClassName}`}>
+                  <span className={`self-start rounded-full px-3 py-1 text-[0.7rem] font-semibold sm:self-auto sm:text-[0.72rem] ${section.statusClassName}`}>
                     {section.statusText}
                   </span>
                 </div>
@@ -576,30 +634,40 @@ const PickupSchedule = () => {
                     return (
                       <article
                         key={`${section.id || section.title}-${order.id}`}
-                        className="flex flex-col gap-4 rounded-[1rem] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 md:flex-row md:items-center md:justify-between"
+                        className="flex flex-col gap-3 rounded-[1rem] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:gap-4 md:flex-row md:items-center md:justify-between"
                       >
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-[0.95rem] font-semibold text-slate-900">#{order.id}</h3>
-                            <span className="text-[0.95rem] text-slate-700">{order.customer}</span>
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <h3 className="text-[0.88rem] font-semibold text-slate-900 sm:text-[0.95rem]">
+                              #{order.id}
+                            </h3>
+                            <span className="text-[0.88rem] text-slate-700 sm:text-[0.95rem]">
+                              {order.customer}
+                            </span>
                             {contactSummary && (
-                              <span className="text-[0.76rem] text-slate-500">{contactSummary}</span>
+                              <span className="text-[0.72rem] text-slate-500 sm:text-[0.76rem]">
+                                {contactSummary}
+                              </span>
                             )}
                           </div>
-                          <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                            <span className={`rounded-full px-2.5 py-0.5 text-[0.72rem] font-semibold ${order.itemBadgeClassName}`}>
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <span className={`rounded-full px-2.5 py-0.5 text-[0.68rem] font-semibold sm:text-[0.72rem] ${order.itemBadgeClassName}`}>
                               {order.items} items
                             </span>
-                            <span className={`rounded-full px-2.5 py-0.5 text-[0.72rem] font-semibold ${order.statusBadgeClassName}`}>
+                            <span className={`rounded-full px-2.5 py-0.5 text-[0.68rem] font-semibold sm:text-[0.72rem] ${order.statusBadgeClassName}`}>
                               {order.status}
                             </span>
-                            <span className="text-[0.76rem] text-slate-600">{order.scheduleText}</span>
+                            <span className="text-[0.72rem] text-slate-600 sm:text-[0.76rem]">
+                              {order.scheduleText}
+                            </span>
                             {order.readyText && (
-                              <span className="text-[0.76rem] text-slate-600">{order.readyText}</span>
+                              <span className="text-[0.72rem] text-slate-600 sm:text-[0.76rem]">
+                                {order.readyText}
+                              </span>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                           <div className="flex flex-wrap gap-2">
                             {customerContactActions.length > 0 ? (
                               customerContactActions.map((action, index) => (
@@ -607,24 +675,24 @@ const PickupSchedule = () => {
                                   key={`${order.id}-${action.id}`}
                                   type="button"
                                   onClick={() => launchContactAction(action.href)}
-                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-medium ${
+                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.72rem] font-medium sm:text-[0.76rem] ${
                                     index === 0
                                       ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
                                       : "bg-slate-100 text-slate-600"
                                   }`}
                                 >
-                                  <action.Icon className="h-3.5 w-3.5" />
+                                  <action.Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                   <span>{action.label}</span>
                                 </button>
                               ))
                             ) : (
-                              <span className="text-[0.78rem] text-slate-400">No contact method</span>
+                              <span className="text-[0.76rem] text-slate-400">No contact method</span>
                             )}
                           </div>
                           <Button
                             variant="primary"
                             size="md"
-                            className={`rounded-xl px-4 py-2 text-[0.78rem] font-semibold ${order.buttonClassName || ""}`}
+                            className={`w-full rounded-xl px-4 py-2 text-[0.76rem] font-semibold sm:w-auto sm:text-[0.78rem] ${order.buttonClassName || ""}`}
                           >
                             Mark Picked Up
                           </Button>
@@ -638,34 +706,48 @@ const PickupSchedule = () => {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <aside className="space-y-5 self-start">
-          <section className="rounded-[1.2rem] bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+        {/* Sidebar — full width below xl, sticky fixed column on xl+ */}
+        <aside className="space-y-4 sm:space-y-5 xl:sticky xl:top-6 xl:self-start">
+          <section className="rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-[1.2rem] font-semibold text-slate-900">Capacity Management</h2>
-                <p className="mt-1 text-[0.76rem] text-slate-500">Synced with the live pickup workflow</p>
+                <h2 className="text-[1.05rem] font-semibold text-slate-900 sm:text-[1.2rem]">
+                  Capacity Management
+                </h2>
+                <p className="mt-1 text-[0.72rem] text-slate-500 sm:text-[0.76rem]">
+                  Synced with the live pickup workflow
+                </p>
               </div>
-              <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
+              <span className="shrink-0 rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
                 {capacitySummary.utilization}% used
               </span>
             </div>
 
-            <div className="mt-6">
-              <h3 className="text-[1rem] font-semibold text-slate-900">Adjust Capacity</h3>
-              <div className="mt-4 space-y-4">
+            <div className="mt-5 sm:mt-6">
+              <h3 className="text-[0.95rem] font-semibold text-slate-900 sm:text-[1rem]">
+                Adjust Capacity
+              </h3>
+              {/* Slots: horizontal scroll on mobile, stacked on sm+ */}
+              <div className="mt-3 flex gap-3 overflow-x-auto pb-2 sm:mt-4 sm:block sm:overflow-visible sm:pb-0 sm:space-y-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {capacitySummary.slots.map((slot) => (
-                  <div key={slot.id} className="rounded-[1rem] border border-slate-100 p-3">
+                  <div
+                    key={slot.id}
+                    className="min-w-[180px] shrink-0 rounded-[1rem] border border-slate-100 p-3 sm:min-w-0 sm:shrink-0"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[0.9rem] font-semibold text-slate-900">{slot.label}</p>
-                        <p className="mt-1 text-[0.76rem] text-slate-500">{slot.statusLabel}</p>
+                        <p className="text-[0.85rem] font-semibold text-slate-900 sm:text-[0.9rem]">
+                          {slot.label}
+                        </p>
+                        <p className="mt-1 text-[0.7rem] text-slate-500 sm:text-[0.76rem]">
+                          {slot.statusLabel}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[0.92rem] font-semibold text-[var(--color-primary)]">
+                        <p className="text-[0.85rem] font-semibold text-[var(--color-primary)] sm:text-[0.92rem]">
                           {slot.filled}/{slot.capacity}
                         </p>
-                        <p className="text-[0.72rem] text-slate-500">scheduled</p>
+                        <p className="text-[0.68rem] text-slate-500 sm:text-[0.72rem]">scheduled</p>
                       </div>
                     </div>
                     <div className="mt-3 h-2 rounded-full bg-[var(--color-primary-soft)]">
@@ -675,33 +757,37 @@ const PickupSchedule = () => {
                       />
                     </div>
                     {slot.blockReason && (
-                      <p className="mt-2 text-[0.72rem] text-slate-500">{slot.blockReason}</p>
+                      <p className="mt-2 text-[0.7rem] text-slate-500">{slot.blockReason}</p>
                     )}
                   </div>
                 ))}
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
                 {[
                   { label: "Scheduled", value: capacitySummary.totalFilled },
                   { label: "Open", value: capacitySummary.totalAvailable },
                   { label: "Current", value: capacitySummary.currentSlotLabel },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-[1rem] bg-slate-50 px-3 py-3 text-center">
-                    <p className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-slate-500">
+                  <div key={item.label} className="rounded-[1rem] bg-slate-50 px-2 py-2.5 text-center sm:px-3 sm:py-3">
+                    <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-slate-500 sm:text-[0.7rem]">
                       {item.label}
                     </p>
-                    <p className="mt-1 text-[0.92rem] font-semibold text-slate-900">{item.value}</p>
+                    <p className="mt-1 text-[0.82rem] font-semibold text-slate-900 sm:text-[0.92rem]">
+                      {item.value}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
               <div className="flex items-center justify-between gap-4">
-                <h3 className="text-[1rem] font-semibold text-slate-900">Block Time Slot</h3>
+                <h3 className="text-[0.95rem] font-semibold text-slate-900 sm:text-[1rem]">
+                  Block Time Slot
+                </h3>
                 <span
-                  className={`rounded-full px-3 py-1 text-[0.72rem] font-semibold ${
+                  className={`shrink-0 rounded-full px-3 py-1 text-[0.72rem] font-semibold ${
                     capacitySummary.blockedSlots.length > 0
                       ? "bg-[#f7dada] text-[var(--color-primary)]"
                       : "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
@@ -712,7 +798,9 @@ const PickupSchedule = () => {
                     : "Open"}
                 </span>
               </div>
-              <p className="mt-3 text-[0.8rem] leading-6 text-slate-500">{capacitySummary.blockSummary}</p>
+              <p className="mt-3 text-[0.76rem] leading-6 text-slate-500 sm:text-[0.8rem]">
+                {capacitySummary.blockSummary}
+              </p>
               {capacitySummary.blockedSlots.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {capacitySummary.blockedSlots.map((slot) => (
@@ -727,39 +815,46 @@ const PickupSchedule = () => {
               )}
             </div>
 
-            <div className="mt-6">
-              <h3 className="text-[1rem] font-semibold text-slate-900">Special Hours</h3>
-              <div className="mt-4 rounded-[1rem] bg-slate-50 px-4 py-4">
+            <div className="mt-5 sm:mt-6">
+              <h3 className="text-[0.95rem] font-semibold text-slate-900 sm:text-[1rem]">
+                Special Hours
+              </h3>
+              <div className="mt-3 rounded-[1rem] bg-slate-50 px-4 py-4 sm:mt-4">
                 <div className="flex items-center gap-2 text-[var(--color-primary)]">
-                  <Plus className="h-4 w-4" />
-                  <span className="text-[0.78rem] font-semibold">Workflow Overrides</span>
+                  <Plus className="h-4 w-4 shrink-0" />
+                  <span className="text-[0.74rem] font-semibold sm:text-[0.78rem]">
+                    Workflow Overrides
+                  </span>
                 </div>
-                <p className="mt-2 text-[0.8rem] leading-6 text-slate-500">
+                <p className="mt-2 text-[0.76rem] leading-6 text-slate-500 sm:text-[0.8rem]">
                   {capacitySummary.specialHoursText}
                 </p>
               </div>
-              <p className="mt-3 text-[0.72rem] text-slate-400">
+              <p className="mt-3 text-[0.7rem] text-slate-400 sm:text-[0.72rem]">
                 Last synced: {capacitySummary.syncedAt || "Unavailable"}
               </p>
             </div>
           </section>
 
-          <section className="rounded-[1.2rem] bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-            <h2 className="text-[1.2rem] font-semibold text-slate-900">Quick Actions</h2>
-            <div className="mt-5 space-y-3">
+          <section className="rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
+            <h2 className="text-[1.05rem] font-semibold text-slate-900 sm:text-[1.2rem]">
+              Quick Actions
+            </h2>
+            {/* 3-col grid on mobile, stacked column on sm+ */}
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:grid-cols-1 sm:gap-3">
               {quickActions.map((action) => (
                 <Button
                   key={action.id}
                   variant={action.variant}
                   size="md"
-                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.8rem] font-medium ${
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[0.66rem] font-medium sm:gap-2 sm:px-4 sm:text-[0.8rem] ${
                     action.variant === "secondary"
                       ? "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
                       : ""
                   }`}
                 >
-                  <action.Icon className="h-4 w-4" />
-                  <span>{action.label}</span>
+                  <action.Icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                  <span className="truncate">{action.label}</span>
                 </Button>
               ))}
             </div>
