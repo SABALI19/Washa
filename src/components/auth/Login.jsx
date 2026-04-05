@@ -6,6 +6,7 @@ import {
   Eye,
   EyeOff,
   Mail,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -84,8 +85,23 @@ const Login = () => {
   };
 
   return (
-    <section className="min-h-screen bg-white px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
+    <section className="min-h-screen bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="mx-auto mb-6 flex w-full max-w-[420px] items-center justify-between lg:hidden">
+          <Link to="/" className="flex items-center gap-2">
+            <img src={logoBlue} alt="LaundryTrack" className="h-8 w-8 object-contain" />
+            <span className="text-sm font-semibold text-slate-900">LaundryTrack</span>
+          </Link>
+          <Link
+            to="/"
+            aria-label="Close sign in page"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-[#2c4a7d] shadow-sm transition-colors hover:border-[#2c4a7d]"
+          >
+            <X className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className="grid min-h-[calc(100vh-2rem)] w-full gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-10">
         <div className="hidden px-8 py-6 lg:block">
           <div className="flex items-center gap-2">
             <img src={logoBlue} alt="LaundryTrack" className="h-6 w-6 object-contain" />
@@ -139,10 +155,10 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[420px] flex-col justify-between py-4">
+        <div className="mx-auto flex w-full max-w-[420px] flex-col justify-between py-2 sm:py-4">
           <div>
             <div className="text-center">
-              <h1 className="text-[1.55rem] font-semibold text-slate-900">
+              <h1 className="text-[1.4rem] font-semibold text-slate-900 sm:text-[1.55rem]">
                 Sign In to LaundryTrack
               </h1>
               <p className="mt-2 text-[0.82rem] text-slate-500">
@@ -242,12 +258,13 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="mt-10 flex items-center justify-center gap-5 text-[0.62rem] text-slate-400">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[0.62rem] text-slate-400">
             <span>Terms of Service</span>
             <span>Privacy Policy</span>
             <span>Help</span>
           </div>
         </div>
+      </div>
       </div>
     </section>
   );
