@@ -62,22 +62,22 @@ const PickupSchedule = () => {
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         <div className="space-y-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <h1 className="text-[1.6rem] font-semibold tracking-[-0.03em] text-slate-900">
+            <h1 className="text-[1.6rem] font-semibold tracking-[-0.03em] text-[#2c4a7d]">
               Pickup Schedule
             </h1>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
               <Button
                 variant="primary"
                 size="md"
-                className="rounded-xl px-4 py-2 text-[0.8rem] font-semibold"
+                className="w-full rounded-xl px-4 py-2 text-[0.78rem] font-semibold sm:w-auto sm:text-[0.8rem]"
               >
                 Today
               </Button>
               <Button
                 variant="secondary"
                 size="md"
-                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.8rem] font-medium"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-medium sm:w-auto sm:text-[0.8rem]"
               >
                 <CalendarDays className="h-4 w-4" />
                 <span>Date Picker</span>
@@ -85,7 +85,7 @@ const PickupSchedule = () => {
               <Button
                 variant="secondary"
                 size="md"
-                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.8rem] font-medium"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-medium sm:w-auto sm:text-[0.8rem]"
               >
                 <Cog className="h-4 w-4" />
                 <span>Manage Time Slots</span>
