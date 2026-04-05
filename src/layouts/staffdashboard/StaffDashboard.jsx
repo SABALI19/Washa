@@ -94,33 +94,44 @@ const StaffDashboard = () => {
     () => filterPickupSections(resolvedDashboard.pickupSections, activeFilter),
     [activeFilter, resolvedDashboard.pickupSections],
   );
+  const sidebarContent = useMemo(
+    () => (
+      <div className="space-y-6">
+        <TodaySummary summaryItems={resolvedDashboard.summaryItems} />
+        <Quickfilter
+          activeFilter={activeFilter}
+          filters={resolvedDashboard.quickFilters}
+          onFilterChange={setActiveFilter}
+        />
+        <ShiftInformation {...resolvedDashboard.shiftInformation} />
+        <QuickActions items={resolvedDashboard.quickActions} />
+      </div>
+    ),
+    [
+      activeFilter,
+      resolvedDashboard.quickActions,
+      resolvedDashboard.quickFilters,
+      resolvedDashboard.shiftInformation,
+      resolvedDashboard.summaryItems,
+    ],
+  );
 
   useEffect(() => {
     if (!setMobileSidebarContent) {
       return undefined;
     }
 
-    setMobileSidebarContent(<QuickActions items={resolvedDashboard.quickActions} />);
+    setMobileSidebarContent(sidebarContent);
 
     return () => {
       setMobileSidebarContent(null);
       closeMobileSidebar?.();
     };
-  }, [closeMobileSidebar, resolvedDashboard.quickActions, setMobileSidebarContent]);
+  }, [closeMobileSidebar, setMobileSidebarContent, sidebarContent]);
 
   return (
     <section className="mx-auto w-full max-w-[1450px]">
-      <div className="grid gap-8 xl:grid-cols-[270px_minmax(0,1fr)_280px]">
-        <div className="space-y-6">
-          <TodaySummary summaryItems={resolvedDashboard.summaryItems} />
-          <Quickfilter
-            activeFilter={activeFilter}
-            filters={resolvedDashboard.quickFilters}
-            onFilterChange={setActiveFilter}
-          />
-          <ShiftInformation {...resolvedDashboard.shiftInformation} />
-        </div>
-
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <h1 className="text-[1.85rem] font-semibold tracking-[-0.03em] text-slate-900">
@@ -367,7 +378,7 @@ const StaffDashboard = () => {
         </div>
 
         <div className="hidden xl:block">
-          <QuickActions items={resolvedDashboard.quickActions} />
+          {sidebarContent}
         </div>
       </div>
     </section>
