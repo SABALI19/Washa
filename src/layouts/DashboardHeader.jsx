@@ -166,8 +166,8 @@ const DashboardHeader = ({
                   to={item.href}
                   className={`whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ${
                     location.pathname === item.href
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700"
+                      ? "bg-[#2c4a7d] text-white"
+                      : "bg-gray-100 text-[#2c4a7d]"
                   }`}
                 >
                   {item.name}
