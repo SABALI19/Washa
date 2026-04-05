@@ -351,8 +351,8 @@ const PickupSchedule = () => {
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1500px]">
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+    <section className="mx-auto w-full max-w-[1500px] overflow-x-hidden">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start xl:gap-8">
         <div className="space-y-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -364,7 +364,7 @@ const PickupSchedule = () => {
               </p>
             </div>
 
-            <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:gap-3">
+            <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3 sm:gap-3">
               <Button
                 variant="primary"
                 size="md"
@@ -433,7 +433,7 @@ const PickupSchedule = () => {
                 return (
                   <article
                     key={`${pickup.id}-${pickup.scheduledDate}`}
-                    className="w-[calc(100vw-4.25rem)] max-w-[22rem] shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:w-auto sm:max-w-none sm:min-w-0 sm:shrink"
+                    className="w-[min(20rem,calc(100vw-2.5rem))] max-w-[22rem] shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:w-auto sm:max-w-none sm:min-w-0 sm:shrink"
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div>
@@ -463,18 +463,18 @@ const PickupSchedule = () => {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-2 md:justify-end">
-                        {customerContactActions.length > 0 ? (
-                          customerContactActions.map((action, index) => (
-                            <Button
+                        <div className="flex flex-wrap gap-2 md:justify-end">
+                          {customerContactActions.length > 0 ? (
+                            customerContactActions.map((action, index) => (
+                              <Button
                               key={`${pickup.id}-${action.id}`}
                               variant={index === 0 ? "primary" : "secondary"}
                               size="md"
                               onClick={() => launchContactAction(action.href)}
-                              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
-                            >
-                              <action.Icon className="h-3.5 w-3.5" />
-                              <span className="whitespace-nowrap font-roboto">{action.label}</span>
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold sm:w-auto"
+                              >
+                                <action.Icon className="h-3.5 w-3.5" />
+                                <span className="whitespace-nowrap font-roboto">{action.label}</span>
                             </Button>
                           ))
                         ) : (
@@ -578,7 +578,7 @@ const PickupSchedule = () => {
                                   key={`${order.id}-${action.id}`}
                                   type="button"
                                   onClick={() => launchContactAction(action.href)}
-                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-medium ${
+                                  className={`inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-medium sm:w-auto ${
                                     index === 0
                                       ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
                                       : "bg-slate-100 text-slate-600"
@@ -595,7 +595,7 @@ const PickupSchedule = () => {
                           <Button
                             variant="primary"
                             size="md"
-                            className={`rounded-xl px-4 py-2 text-[0.78rem] font-semibold ${order.buttonClassName || ""}`}
+                            className={`w-full rounded-xl px-4 py-2 text-[0.78rem] font-semibold sm:w-auto ${order.buttonClassName || ""}`}
                           >
                             Mark Picked Up
                           </Button>
@@ -610,7 +610,7 @@ const PickupSchedule = () => {
         </div>
 
         <aside className="space-y-5 self-start">
-          <section className="rounded-[1.2rem] bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+          <section className="rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-[1.2rem] font-semibold text-slate-900">
@@ -660,7 +660,7 @@ const PickupSchedule = () => {
                 ))}
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
                   {
                     label: "Scheduled",
@@ -743,7 +743,7 @@ const PickupSchedule = () => {
             </div>
           </section>
 
-          <section className="rounded-[1.2rem] bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+          <section className="rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
             <h2 className="text-[1.2rem] font-semibold text-slate-900">
               Quick Actions
             </h2>
