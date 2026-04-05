@@ -3,6 +3,12 @@ import { ArrowUpDown } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import Button from "../../components/Button";
+import jacketImage from "../../assets/images/jacket.jpg";
+import laundry1Image from "../../assets/images/laundry1.jpg";
+import laundry2Image from "../../assets/images/laundry2.jpg";
+import laundry4Image from "../../assets/images/laundry4.jpg";
+import laundry7Image from "../../assets/images/laundry7.jpg";
+import yellowTImage from "../../assets/images/Yellow-T.jpg";
 import { useDashboardLayout } from "../DashboardLayout.jsx";
 import useStaffDashboard from "../../hooks/useStaffDashboard.js";
 import { resolveApiAssetUrl } from "../../utils/auth.js";
@@ -22,6 +28,101 @@ const emptyDashboard = {
   summaryItems: [],
 };
 
+const dummyPendingVerificationOrders = [
+  {
+    customer: "Emily Chen",
+    id: "LT-2024-0315",
+    images: [laundry1Image, laundry7Image, yellowTImage],
+    items: 8,
+    rush: true,
+    submittedAt: "Today at 1:45 PM",
+  },
+  {
+    customer: "Michael Rodriguez",
+    id: "LT-2024-0314",
+    images: [jacketImage, laundry1Image, laundry4Image],
+    items: 5,
+    rush: false,
+    submittedAt: "Today at 11:20 AM",
+  },
+];
+
+const dummyInProcessOrders = [
+  {
+    badgeClassName: "bg-[var(--color-primary-soft)] text-[var(--color-primary)]",
+    id: "LT-2024-0312",
+    image: laundry2Image,
+    progress: 34,
+    stage: "Washing",
+    statusKey: "in-progress",
+    time: "25 minutes ago",
+  },
+  {
+    badgeClassName: "bg-[var(--color-warm-soft)] text-[var(--color-primary)]",
+    id: "LT-2024-0311",
+    image: laundry7Image,
+    progress: 67,
+    stage: "Drying",
+    statusKey: "in-progress",
+    time: "15 minutes ago",
+  },
+];
+
+const dummyPickupSections = [
+  {
+    label: "Morning (9:00 AM - 12:00 PM)",
+    orders: [
+      {
+        actionLabel: "Ready for Pickup",
+        customer: "David Kim",
+        id: "LT-2024-0308",
+        isActionActive: true,
+        isOverdue: false,
+        items: 6,
+        status: "Ready",
+        statusClassName: "bg-[var(--color-primary-soft)] text-[var(--color-primary)]",
+        statusKey: "completed",
+        time: "10:30 AM",
+      },
+    ],
+  },
+  {
+    label: "Afternoon (12:00 PM - 6:00 PM)",
+    orders: [
+      {
+        actionLabel: "Update Status",
+        customer: "Lisa Wang",
+        id: "LT-2024-0307",
+        isActionActive: false,
+        isOverdue: false,
+        items: 9,
+        status: "Preparing",
+        statusClassName: "bg-[var(--color-warm-soft)] text-[var(--color-primary)]",
+        statusKey: "confirmed",
+        time: "2:15 PM",
+      },
+      {
+        actionLabel: "Confirm Pickup",
+        customer: "Robert Taylor",
+        id: "LT-2024-0306",
+        isActionActive: true,
+        isOverdue: true,
+        items: 4,
+        status: "Needs Verification",
+        statusClassName: "bg-slate-100 text-slate-600",
+        statusKey: "pending",
+        time: "4:00 PM",
+      },
+    ],
+  },
+];
+
+const fallbackShiftInformation = {
+  currentShift: "8:00 AM - 4:00 PM",
+  role: "Processing Specialist",
+  staffMember: "Sarah Johnson",
+};
+
 const formatHeaderTimestamp = (value) => {
   if (!value) {
     return "";
@@ -34,6 +135,27 @@ const formatHeaderTimestamp = (value) => {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+};
+
+const resolveStaffImageSrc = (value) => {
+  const normalizedValue = String(value || "").trim();
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  if (
+    normalizedValue.startsWith("/assets/") ||
+    normalizedValue.startsWith("assets/") ||
+    normalizedValue.startsWith("blob:") ||
+    normalizedValue.startsWith("data:") ||
+    normalizedValue.startsWith("http://") ||
+    normalizedValue.startsWith("https://")
+  ) {
+    return normalizedValue;
+  }
+
+  return resolveApiAssetUrl(normalizedValue);
 };
 
 const filterPendingVerificationOrders = (orders, activeFilter) => {
@@ -75,13 +197,130 @@ const filterPickupSections = (sections, activeFilter) => {
     .filter((section) => section.orders.length > 0);
 };
 
+const mergePickupSections = (...sectionGroups) => {
+  const sectionMap = new Map();
+
+  sectionGroups.flat().forEach((section) => {
+    const existingSection = sectionMap.get(section.label);
+
+    if (existingSection) {
+      existingSection.orders.push(...section.orders);
+      return;
+    }
+
+    sectionMap.set(section.label, {
+      ...section,
+      orders: [...section.orders],
+    });
+  });
+
+  return Array.from(sectionMap.values());
+};
+
+const buildDashboardWithSeedData = (dashboard) => {
+  const combinedPendingVerificationOrders = [
+    ...(dashboard?.pendingVerificationOrders || []),
+    ...dummyPendingVerificationOrders,
+  ];
+  const combinedInProcessOrders = [
+    ...(dashboard?.inProcessOrders || []),
+    ...dummyInProcessOrders,
+  ];
+  const combinedPickupSections = mergePickupSections(
+    dashboard?.pickupSections || [],
+    dummyPickupSections,
+  );
+  const pickupOrders = combinedPickupSections.flatMap((section) => section.orders);
+  const trackedOrderIds = new Set([
+    ...combinedPendingVerificationOrders.map((order) => order.id),
+    ...combinedInProcessOrders.map((order) => order.id),
+    ...pickupOrders.map((order) => order.id),
+  ]);
+
+  return {
+    generatedAt: dashboard?.generatedAt || new Date().toISOString(),
+    inProcessOrders: combinedInProcessOrders,
+    pendingVerificationOrders: combinedPendingVerificationOrders,
+    pickupSections: combinedPickupSections,
+    quickActions: [
+      {
+        count: combinedPendingVerificationOrders.length,
+        id: "scan",
+        label: "Scan Order QR Code",
+        variant: "primary",
+      },
+      {
+        count: trackedOrderIds.size,
+        id: "lookup",
+        label: "Manual Order Lookup",
+        variant: "secondary",
+      },
+      {
+        count: pickupOrders.filter((order) => order.isOverdue).length,
+        id: "issue",
+        label: "Report Issue",
+        variant: "secondary",
+      },
+    ],
+    quickFilters: [
+      {
+        count: trackedOrderIds.size,
+        key: "all",
+        label: "All Orders",
+      },
+      {
+        count: combinedPendingVerificationOrders.length,
+        key: "pending",
+        label: "Needs Verification",
+      },
+      {
+        count: combinedInProcessOrders.length,
+        key: "in-progress",
+        label: "In Process",
+      },
+      {
+        count: pickupOrders.filter((order) => order.statusKey === "completed").length,
+        key: "completed",
+        label: "Ready for Pickup",
+      },
+      {
+        count: pickupOrders.filter((order) => order.isOverdue).length,
+        key: "overdue",
+        label: "Overdue",
+      },
+    ],
+    shiftInformation: dashboard?.shiftInformation || fallbackShiftInformation,
+    summaryItems: [
+      {
+        label: "Pending verification",
+        value: combinedPendingVerificationOrders.length,
+      },
+      {
+        label: "In-process orders",
+        value: combinedInProcessOrders.length,
+      },
+      {
+        label: "Ready for pickup",
+        value: pickupOrders.filter((order) => order.statusKey === "completed").length,
+      },
+      {
+        label: "Today's pickups",
+        value: pickupOrders.length,
+      },
+    ],
+  };
+};
+
 const StaffDashboard = () => {
   const dashboardLayout = useDashboardLayout();
   const setMobileSidebarContent = dashboardLayout?.setMobileSidebarContent;
   const closeMobileSidebar = dashboardLayout?.closeMobileSidebar;
   const { dashboard, error, isLoading } = useStaffDashboard();
   const [activeFilter, setActiveFilter] = useState("all");
-  const resolvedDashboard = dashboard || emptyDashboard;
+  const resolvedDashboard = useMemo(
+    () => buildDashboardWithSeedData(dashboard || emptyDashboard),
+    [dashboard],
+  );
   const pendingVerificationOrders = useMemo(
     () => filterPendingVerificationOrders(resolvedDashboard.pendingVerificationOrders, activeFilter),
     [activeFilter, resolvedDashboard.pendingVerificationOrders],
@@ -206,8 +445,8 @@ const StaffDashboard = () => {
                                 key={`${order.id}-${index}`}
                                 className="h-11 w-11 overflow-hidden rounded-lg bg-slate-100"
                               >
-                                <img
-                                  src={resolveApiAssetUrl(image)}
+                                  <img
+                                  src={resolveStaffImageSrc(image)}
                                   alt={`${order.id} item ${index + 1}`}
                                   className="h-full w-full object-cover"
                                 />
@@ -284,7 +523,7 @@ const StaffDashboard = () => {
                       <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
                         {order.image ? (
                           <img
-                            src={resolveApiAssetUrl(order.image)}
+                            src={resolveStaffImageSrc(order.image)}
                             alt={order.id}
                             className="h-full w-full object-cover"
                           />
