@@ -425,7 +425,7 @@ const PickupSchedule = () => {
               </p>
             </div>
 
-            <div className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:overflow-visible sm:pb-0 lg:grid-cols-2">
+            <div className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4 pb-1 overscroll-x-contain [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent sm:mx-0 sm:grid sm:grid-cols-1 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-2">
               {resolvedPickupSchedule.overduePickups.map((pickup) => {
                 const customerContactActions = getCustomerContactActions(pickup);
                 const contactSummary = getContactSummary(pickup);
@@ -433,7 +433,7 @@ const PickupSchedule = () => {
                 return (
                   <article
                     key={`${pickup.id}-${pickup.scheduledDate}`}
-                    className="min-w-[85vw] snap-center rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:min-w-0"
+                    className="w-[calc(100vw-4.25rem)] max-w-[22rem] shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:w-auto sm:max-w-none sm:min-w-0 sm:shrink"
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div>
