@@ -317,7 +317,7 @@ const OverdueCarousel = ({ pickups }) => {
   return (
     <>
       {/* Mobile (<640px): swipeable snap carousel - ONE CARD AT A TIME */}
-<div className="sm:hidden min-w-0 overflow-hidden">
+<div className="mt-4 sm:hidden min-w-0 overflow-hidden">
   <div
     ref={scrollRef}
     onScroll={handleScroll}
@@ -325,7 +325,7 @@ const OverdueCarousel = ({ pickups }) => {
     onPointerMove={handlePointerMove}
     onPointerUp={handlePointerUp}
     onPointerCancel={handlePointerUp}
-    className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
   >
     {pickups.map((pickup) => {
       const customerContactActions = getCustomerContactActions(pickup);
@@ -333,7 +333,7 @@ const OverdueCarousel = ({ pickups }) => {
       return (
         <article
           key={`${pickup.id}-${pickup.scheduledDate}`}
-          className="min-w-full shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
+          className="min-w-full shrink-0 snap-center rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
         >
           <div className="flex flex-wrap items-start gap-2">
             <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
@@ -535,13 +535,13 @@ const PickupSchedule = () => {
                 Workflow-synced schedule for {selectedDate}
               </p>
             </div>
-            {/* 3-col grid on mobile, inline row on sm+ */}
-            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2">
+            {/* Stacked controls on mobile, inline row on sm+ */}
+            <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:gap-2">
               <Button
                 variant="primary"
                 size="md"
                 onClick={() => setSelectedDate(getTodayDateValue())}
-                className="w-full rounded-xl px-2 py-2 text-[0.7rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.8rem]"
+                className="w-full rounded-xl px-3 py-2.5 text-[0.78rem] font-semibold sm:w-auto sm:px-4 sm:py-2 sm:text-[0.8rem]"
               >
                 Today
               </Button>
@@ -549,7 +549,7 @@ const PickupSchedule = () => {
                 variant="secondary"
                 size="md"
                 onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
-                className="inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[0.7rem] font-medium sm:w-auto sm:gap-2 sm:px-4 sm:text-[0.8rem]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[0.78rem] font-medium sm:w-auto sm:px-4 sm:py-2 sm:text-[0.8rem]"
               >
                 <CalendarDays className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 <span className="truncate">Date Picker</span>
@@ -557,10 +557,10 @@ const PickupSchedule = () => {
               <Button
                 variant="secondary"
                 size="md"
-                className="inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[0.7rem] font-medium sm:w-auto sm:gap-2 sm:px-4 sm:text-[0.8rem]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[0.78rem] font-medium sm:w-auto sm:px-4 sm:py-2 sm:text-[0.8rem]"
               >
                 <Cog className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate">Manage Time Slots</span>
+                <span>Manage Time Slots</span>
               </Button>
               <input
                 ref={dateInputRef}
