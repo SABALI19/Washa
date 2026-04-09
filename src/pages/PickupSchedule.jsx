@@ -16,7 +16,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import useStaffPickupSchedule from "../hooks/useStaffPickupSchedule.js";
 import {
