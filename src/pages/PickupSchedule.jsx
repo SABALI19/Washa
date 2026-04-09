@@ -1,4 +1,5 @@
 import Button from "../components/Button";
+import QuickActions from "../layouts/staffdashboard/QuickActions.jsx";
 import {
   AlertTriangle,
   CalendarDays,
@@ -64,6 +65,8 @@ const applyFiltersToSection = (section, filterKey, searchQuery, overdueIds) => {
 // ─── Button style helpers ─────────────────────────────────────────────────────
 const activePrimaryBtn =
   "bg-[#2c4a7d] text-white shadow-[inset_0_2px_6px_rgba(0,0,0,0.18)] scale-[0.97]";
+const activeHeaderControlBtn =
+  "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-[inset_0_2px_6px_rgba(0,0,0,0.18)] scale-[0.97]";
 const activeSecondaryBtn =
   "bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-[inset_0_2px_4px_rgba(44,74,125,0.12)] scale-[0.97]";
 
@@ -451,7 +454,7 @@ const PickupSchedule = () => {
                 type="button"
                 onClick={() => { dateInputRef.current?.showPicker?.(); dateInputRef.current?.click(); }}
                 className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[0.72rem] font-medium transition-all duration-150 sm:gap-2 sm:px-4 sm:text-[0.8rem] ${
-                  isDatePickerActive ? activeSecondaryBtn : "border-slate-200 bg-white text-slate-700 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-[0.97]"
+                  isDatePickerActive ? activeHeaderControlBtn : "border-slate-200 bg-white text-slate-700 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-[0.97]"
                 }`}
               >
                 <CalendarDays className="h-3.5 w-3.5 shrink-0" />
@@ -463,7 +466,7 @@ const PickupSchedule = () => {
                 type="button"
                 onClick={() => setShowSlotsPanel((v) => !v)}
                 className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[0.72rem] font-medium transition-all duration-150 sm:gap-2 sm:px-4 sm:text-[0.8rem] ${
-                  showSlotsPanel ? activeSecondaryBtn : "border-slate-200 bg-white text-slate-700 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-[0.97]"
+                  showSlotsPanel ? activeHeaderControlBtn : "border-slate-200 bg-white text-slate-700 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-[0.97]"
                 }`}
               >
                 <Cog className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 ${showSlotsPanel ? "rotate-90" : ""}`} />
@@ -852,32 +855,12 @@ const PickupSchedule = () => {
             </div>
           </section>
 
-          {/* Quick Actions */}
-          <section className="min-w-0 rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
-            <h2 className="text-[1.05rem] font-semibold text-slate-900 sm:text-[1.2rem]">Quick Actions</h2>
-            <div className="mt-4 flex flex-col gap-3 sm:mt-5">
-              {quickActions.map((action) => {
-                const isActive = activeQuickAction === action.id;
-                return (
-                  <button
-                    key={action.id}
-                    type="button"
-                    onClick={() => handleQuickAction(action.id)}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.8rem] font-medium transition-all duration-150 active:scale-[0.97] ${
-                      action.variant === "primary"
-                        ? isActive ? activePrimaryBtn : "bg-[#2c4a7d] text-white hover:bg-[#243f6b]"
-                        : isActive
-                          ? activeSecondaryBtn + " border"
-                          : "border border-[var(--color-primary)] text-[var(--color-primary)] bg-white hover:bg-[var(--color-primary)] hover:text-white"
-                    }`}
-                  >
-                    <action.Icon className="h-4 w-4 shrink-0" />
-                    <span>{action.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+          <QuickActions
+            activeActionId={activeQuickAction}
+            items={quickActions}
+            onActionClick={handleQuickAction}
+            title="Quick Actions"
+          />
         </aside>
       </div>
     </section>
