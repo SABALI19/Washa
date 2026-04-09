@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowUpDown } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowUpDown, LoaderCircle, Search } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 import Button from "../../components/Button";
 import jacketImage from "../../assets/images/jacket.jpg";
@@ -11,7 +11,7 @@ import laundry7Image from "../../assets/images/laundry7.jpg";
 import yellowTImage from "../../assets/images/Yellow-T.jpg";
 import { useDashboardLayout } from "../DashboardLayout.jsx";
 import useStaffDashboard from "../../hooks/useStaffDashboard.js";
-import { resolveApiAssetUrl } from "../../utils/auth.js";
+import { apiRequest, resolveApiAssetUrl } from "../../utils/auth.js";
 import QuickActions from "./QuickActions.jsx";
 import Quickfilter from "./Quickfilter.jsx";
 import ShiftInformation from "./ShiftInformation.jsx";
@@ -310,11 +310,17 @@ const buildDashboardWithSeedData = (dashboard) => {
 };
 
 const StaffDashboard = () => {
+  const navigate = useNavigate();
   const dashboardLayout = useDashboardLayout();
   const setMobileSidebarContent = dashboardLayout?.setMobileSidebarContent;
   const closeMobileSidebar = dashboardLayout?.closeMobileSidebar;
   const { dashboard, error, isLoading } = useStaffDashboard();
   const [activeFilter, setActiveFilter] = useState("all");
+  const [activeQuickAction, setActiveQuickAction] = useState(null);
+  const [lookupOrderId, setLookupOrderId] = useState("");
+  const [lookupError, setLookupError] = useState("");
+  const [isLookupLoading, setIsLookupLoading] = useState(false);
+  const lookupInputRef = useRef(null);
   const resolvedDashboard = useMemo(
     () => buildDashboardWithSeedData(dashboard || emptyDashboard),
     [dashboard],
@@ -331,6 +337,132 @@ const StaffDashboard = () => {
     () => filterPickupSections(resolvedDashboard.pickupSections, activeFilter),
     [activeFilter, resolvedDashboard.pickupSections],
   );
+  const fallbackVerificationOrderId = useMemo(() => {
+    const pickupOrderIds = resolvedDashboard.pickupSections.flatMap((section) =>
+      section.orders.map((order) => order.id),
+    );
+
+    return (
+      resolvedDashboard.pendingVerificationOrders[0]?.id ||
+      resolvedDashboard.inProcessOrders[0]?.id ||
+      pickupOrderIds[0] ||
+      ""
+    );
+  }, [
+    resolvedDashboard.inProcessOrders,
+    resolvedDashboard.pendingVerificationOrders,
+    resolvedDashboard.pickupSections,
+  ]);
+  const issueVerificationOrderId = useMemo(() => {
+    const overduePickupOrderId = resolvedDashboard.pickupSections
+      .flatMap((section) => section.orders)
+      .find((order) => order.isOverdue)?.id;
+
+    return (
+      resolvedDashboard.pendingVerificationOrders[0]?.id ||
+      overduePickupOrderId ||
+      resolvedDashboard.inProcessOrders[0]?.id ||
+      fallbackVerificationOrderId
+    );
+  }, [
+    fallbackVerificationOrderId,
+    resolvedDashboard.inProcessOrders,
+    resolvedDashboard.pendingVerificationOrders,
+    resolvedDashboard.pickupSections,
+  ]);
+
+  const handleSidebarFilterChange = useCallback(
+    (nextFilter) => {
+      setActiveFilter(nextFilter);
+      closeMobileSidebar?.();
+    },
+    [closeMobileSidebar],
+  );
+
+  const openVerificationWorkflow = useCallback(
+    (orderId, actionId) => {
+      if (!orderId) {
+        setLookupError(
+          actionId === "issue"
+            ? "No order is available for issue reporting right now."
+            : "No verification order is available right now.",
+        );
+        return;
+      }
+
+      setLookupError("");
+      setActiveQuickAction(actionId);
+      closeMobileSidebar?.();
+      navigate(`/staff/verification/${encodeURIComponent(orderId)}`);
+    },
+    [closeMobileSidebar, navigate],
+  );
+
+  const handleQuickAction = useCallback(
+    (actionId) => {
+      if (actionId === "lookup") {
+        setActiveQuickAction((previousValue) =>
+          previousValue === "lookup" ? null : "lookup",
+        );
+        setLookupError("");
+        return;
+      }
+
+      if (actionId === "scan") {
+        openVerificationWorkflow(fallbackVerificationOrderId, actionId);
+        return;
+      }
+
+      if (actionId === "issue") {
+        openVerificationWorkflow(issueVerificationOrderId, actionId);
+      }
+    },
+    [
+      fallbackVerificationOrderId,
+      issueVerificationOrderId,
+      openVerificationWorkflow,
+    ],
+  );
+
+  const handleLookupSubmit = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      const normalizedOrderId = lookupOrderId.trim().toUpperCase();
+
+      if (!normalizedOrderId) {
+        setLookupError("Enter an order ID to open the verification workflow.");
+        return;
+      }
+
+      try {
+        setIsLookupLoading(true);
+        setLookupError("");
+        await apiRequest(
+          `/orders/staff/verification/${encodeURIComponent(normalizedOrderId)}`,
+        );
+        setActiveQuickAction("lookup");
+        closeMobileSidebar?.();
+        navigate(`/staff/verification/${encodeURIComponent(normalizedOrderId)}`);
+      } catch (requestError) {
+        setLookupError(
+          requestError.message || "Unable to find that verification order.",
+        );
+      } finally {
+        setIsLookupLoading(false);
+      }
+    },
+    [closeMobileSidebar, lookupOrderId, navigate],
+  );
+
+  useEffect(() => {
+    if (activeQuickAction !== "lookup") {
+      return;
+    }
+
+    lookupInputRef.current?.focus();
+  }, [activeQuickAction]);
+
   const sidebarContent = useMemo(
     () => (
       <div className="space-y-6">
@@ -338,14 +470,70 @@ const StaffDashboard = () => {
         <Quickfilter
           activeFilter={activeFilter}
           filters={resolvedDashboard.quickFilters}
-          onFilterChange={setActiveFilter}
+          onFilterChange={handleSidebarFilterChange}
         />
         <ShiftInformation {...resolvedDashboard.shiftInformation} />
-        <QuickActions items={resolvedDashboard.quickActions} />
+        <QuickActions
+          activeActionId={activeQuickAction}
+          items={resolvedDashboard.quickActions}
+          onActionClick={handleQuickAction}
+        />
+        {activeQuickAction === "lookup" && (
+          <section className="rounded-[1.4rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+            <h2 className="text-[0.95rem] font-semibold text-slate-900">
+              Manual Lookup
+            </h2>
+            <p className="mt-2 text-[0.78rem] leading-6 text-slate-500">
+              Enter an order ID to validate it against the staff verification
+              endpoint and open the workflow.
+            </p>
+            <form className="mt-4 space-y-3" onSubmit={handleLookupSubmit}>
+              <label className="flex items-center gap-3 rounded-[0.95rem] border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-[var(--color-primary)] focus-within:bg-white">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <input
+                  ref={lookupInputRef}
+                  type="text"
+                  value={lookupOrderId}
+                  onChange={(event) => setLookupOrderId(event.target.value)}
+                  placeholder="Enter order ID"
+                  className="w-full border-0 bg-transparent text-[0.82rem] text-slate-700 outline-none placeholder:text-slate-400"
+                />
+              </label>
+              {lookupError && (
+                <p className="text-[0.75rem] font-medium text-red-600">
+                  {lookupError}
+                </p>
+              )}
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={isLookupLoading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.8rem] font-semibold"
+              >
+                {isLookupLoading ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                <span>
+                  {isLookupLoading ? "Opening order..." : "Open Verification"}
+                </span>
+              </Button>
+            </form>
+          </section>
+        )}
       </div>
     ),
     [
       activeFilter,
+      activeQuickAction,
+      handleLookupSubmit,
+      handleQuickAction,
+      handleSidebarFilterChange,
+      isLookupLoading,
+      lookupError,
+      lookupOrderId,
       resolvedDashboard.quickActions,
       resolvedDashboard.quickFilters,
       resolvedDashboard.shiftInformation,
