@@ -518,9 +518,9 @@ const PickupSchedule = () => {
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1500px] px-4 sm:px-6 lg:px-8">
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-8 xl:items-start">
-        <div className="space-y-5 sm:space-y-6">
+    <section className="mx-auto w-full min-w-0 max-w-[1500px] px-4 sm:px-6 lg:px-8">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-8 xl:items-start">
+        <div className="min-w-0 space-y-5 sm:space-y-6">
 
           {/* Header */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -598,11 +598,11 @@ const PickupSchedule = () => {
           </section>
 
           {/* Stat Cards - swipeable on mobile, flexed on large screens */}
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-4 flex w-auto min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {resolvedPickupSchedule.statCards.map((card) => (
               <article
                 key={card.id}
-                className="min-w-[78%] snap-start rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:min-w-[260px] sm:p-4 lg:min-w-0 lg:flex-1 lg:basis-0"
+                className="min-w-[78%] shrink-0 snap-start rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:min-w-[260px] sm:p-4 lg:min-w-0 lg:flex-1 lg:basis-0 lg:shrink"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   {card.Icon && (
