@@ -261,22 +261,32 @@ const OverdueCarousel = ({ pickups }) => {
   const getCardWidth = () => {
     const el = scrollRef.current;
     if (!el || pickups.length === 0) return 0;
-    return el.scrollWidth / pickups.length;
+    return el.firstElementChild?.getBoundingClientRect().width || 0;
   };
 
   const scrollToIndex = (index) => {
     const el = scrollRef.current;
     if (!el) return;
     const clamped = Math.min(Math.max(index, 0), pickups.length - 1);
-    el.scrollTo({ left: getCardWidth() * clamped, behavior: "smooth" });
+    const targetCard = el.children[clamped];
+    targetCard?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "start",
+    });
     setActiveIndex(clamped);
   };
 
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el || pickups.length === 0) return;
-    const index = Math.round(el.scrollLeft / getCardWidth());
-    setActiveIndex(Math.min(Math.max(index, 0), pickups.length - 1));
+    const cards = Array.from(el.children);
+    const closestIndex = cards.reduce((closest, card, index) => {
+      const closestDistance = Math.abs(cards[closest].offsetLeft - el.scrollLeft);
+      const cardDistance = Math.abs(card.offsetLeft - el.scrollLeft);
+      return cardDistance < closestDistance ? index : closest;
+    }, 0);
+    setActiveIndex(closestIndex);
   };
 
   const handlePointerDown = (e) => {
@@ -307,7 +317,7 @@ const OverdueCarousel = ({ pickups }) => {
   return (
     <>
       {/* Mobile (<640px): swipeable snap carousel - ONE CARD AT A TIME */}
-<div className="sm:hidden overflow-hidden">
+<div className="sm:hidden min-w-0 overflow-hidden">
   <div
     ref={scrollRef}
     onScroll={handleScroll}
@@ -315,8 +325,7 @@ const OverdueCarousel = ({ pickups }) => {
     onPointerMove={handlePointerMove}
     onPointerUp={handlePointerUp}
     onPointerCancel={handlePointerUp}
-    className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 overscroll-x-contain cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    style={{ scrollSnapType: "x mandatory" }}
+    className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
   >
     {pickups.map((pickup) => {
       const customerContactActions = getCustomerContactActions(pickup);
@@ -324,13 +333,7 @@ const OverdueCarousel = ({ pickups }) => {
       return (
         <article
           key={`${pickup.id}-${pickup.scheduledDate}`}
-          className="w-[calc(100vw-2rem)] shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
-          style={{ 
-            scrollSnapAlign: "start",
-            marginLeft: "1rem",
-            marginRight: "1rem",
-            width: "calc(100vw - 2rem)"
-          }}
+          className="min-w-full shrink-0 snap-start rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
         >
           <div className="flex flex-wrap items-start gap-2">
             <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
@@ -597,12 +600,12 @@ const PickupSchedule = () => {
             <OverdueCarousel pickups={resolvedPickupSchedule.overduePickups} />
           </section>
 
-          {/* Stat Cards - swipeable on mobile, flexed on large screens */}
-          <div className="-mx-4 flex w-auto min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Stat Cards - stacked on mobile, flexed on large screens */}
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:flex lg:flex-wrap">
             {resolvedPickupSchedule.statCards.map((card) => (
               <article
                 key={card.id}
-                className="min-w-[78%] shrink-0 snap-start rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:min-w-[260px] sm:p-4 lg:min-w-0 lg:flex-1 lg:basis-0 lg:shrink"
+                className="rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-4 lg:min-w-0 lg:flex-1 lg:basis-0"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   {card.Icon && (
