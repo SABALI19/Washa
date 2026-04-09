@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Button from "../components/Button";
+import OrderShareModal from "../components/OrderShareModal.jsx";
 import FabButton from "../components/common/FabButton.jsx";
 import {
   Check,
@@ -9,16 +10,19 @@ import {
   Cuboid,
   Plus,
   RefreshCw,
+  QrCode,
   Search,
   Shirt,
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import useCustomerOrders from "../hooks/useCustomerOrders.js";
+import { apiRequest } from "../utils/auth.js";
 import {
   normalizeApiOrderForHistoryCard,
   staticHistoryOrders,
 } from "../utils/customerOrderDisplay.js";
+import { buildSharedOrderUrl } from "../utils/orderShare.js";
 
 const dateRangeOptions = [
   { id: "all", label: "All Time" },
@@ -67,6 +71,10 @@ const OrderHistory = () => {
   const [activeSort, setActiveSort] = useState("newest");
   const [activeStatus, setActiveStatus] = useState("All Status");
   const [activeDateRange, setActiveDateRange] = useState("all");
+  const [shareModalOrder, setShareModalOrder] = useState(null);
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareError, setShareError] = useState("");
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
 
   const allOrders = useMemo(() => {
     const liveOrders = customerOrders.map(normalizeApiOrderForHistoryCard);
@@ -89,6 +97,33 @@ const OrderHistory = () => {
     setActiveStatus("All Status");
     setActiveSort("newest");
     setActiveDateRange("all");
+  };
+
+  const closeShareModal = () => {
+    setShareModalOrder(null);
+    setShareUrl("");
+    setShareError("");
+    setIsGeneratingShare(false);
+  };
+
+  const handleShareGenerate = async () => {
+    if (!shareModalOrder?.routeId) {
+      return;
+    }
+
+    try {
+      setIsGeneratingShare(true);
+      setShareError("");
+      const data = await apiRequest(`/orders/${shareModalOrder.routeId}/share`, {
+        method: "POST",
+      });
+      const nextShareUrl = buildSharedOrderUrl(data.share?.shareToken);
+      setShareUrl(nextShareUrl);
+    } catch (requestError) {
+      setShareError(requestError.message || "Unable to generate a pickup QR code.");
+    } finally {
+      setIsGeneratingShare(false);
+    }
   };
 
   const filteredOrders = useMemo(() => {
@@ -300,6 +335,21 @@ const OrderHistory = () => {
                       <span>Reorder</span>
                     </Button>
                   </Link>
+                  {order.canGeneratePickupShare && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setShareModalOrder(order);
+                        setShareUrl("");
+                        setShareError("");
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                    >
+                      <QrCode className="h-3 w-3" />
+                      <span>Generate QR</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </article>
@@ -360,6 +410,16 @@ const OrderHistory = () => {
           ))}
         </div>
       </div>
+
+      <OrderShareModal
+        error={shareError}
+        isGenerating={isGeneratingShare}
+        isOpen={Boolean(shareModalOrder)}
+        onClose={closeShareModal}
+        onGenerate={handleShareGenerate}
+        orderLabel={shareModalOrder?.displayId ? `order #${shareModalOrder.displayId}` : "this order"}
+        shareUrl={shareUrl}
+      />
     </section>
   );
 };

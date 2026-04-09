@@ -229,6 +229,7 @@ export const normalizeApiOrderForActiveCard = (order) => {
   const scheduledForText = formatOrderDateTime(order.scheduledFor);
 
   return {
+    canGeneratePickupShare: true,
     id: order.orderNumber || order.id,
     routeId: order.id,
     displayId: order.orderNumber || order.id,
@@ -266,6 +267,7 @@ export const normalizeApiOrderForHistoryCard = (order) => {
   }
 
   return {
+    canGeneratePickupShare: true,
     id: order.orderNumber || order.id,
     routeId: order.id,
     displayId: order.orderNumber || order.id,

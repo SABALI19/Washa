@@ -1,4 +1,5 @@
 import Button from "../components/Button";
+import OrderShareModal from "./OrderShareModal.jsx";
 import jacketImage from "../assets/images/jacket.jpg";
 import laundry1Image from "../assets/images/laundry1.jpg";
 import laundry2Image from "../assets/images/laundry2.jpg";
@@ -16,11 +17,12 @@ import {
   Headphones,
   LoaderCircle,
   PackageCheck,
-  Share2,
+  QrCode,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiRequest, resolveApiAssetUrl } from "../utils/auth.js";
+import { buildSharedOrderUrl } from "../utils/orderShare.js";
 import {
   countOrderItems,
   defaultOrderPreviewImages,
@@ -304,25 +306,42 @@ const buildRemoteProgressSteps = (order) => {
 };
 
 const OrderTracking = () => {
-  const { orderId = "LT2024001" } = useParams();
+  const { orderId = "", shareToken = "" } = useParams();
+  const isSharedAccess = Boolean(shareToken);
   const [pickupRemindersEnabled, setPickupRemindersEnabled] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState({
     sms: true,
     email: true,
   });
+  const [isLoadingOrder, setIsLoadingOrder] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [remoteOrder, setRemoteOrder] = useState(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+  const [shareError, setShareError] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
     const loadOrder = async () => {
       try {
-        const data = await apiRequest(`/orders/${orderId}`);
+        setIsLoadingOrder(true);
+        setLoadError("");
+        const data = await apiRequest(
+          isSharedAccess ? `/orders/share/${shareToken}` : `/orders/${orderId}`,
+          { retryOnAuth: !isSharedAccess },
+        );
         if (!isMounted) return;
         setRemoteOrder(data.order || null);
-      } catch {
+      } catch (error) {
         if (isMounted) {
           setRemoteOrder(null);
+          setLoadError(error.message || "Unable to load this order.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingOrder(false);
         }
       }
     };
@@ -332,13 +351,39 @@ const OrderTracking = () => {
     return () => {
       isMounted = false;
     };
-  }, [orderId]);
+  }, [isSharedAccess, orderId, shareToken]);
 
   const toggleNotificationPreference = (key) => {
     setNotificationPreferences((current) => ({
       ...current,
       [key]: !current[key],
     }));
+  };
+
+  const closeShareModal = () => {
+    setIsShareModalOpen(false);
+    setShareError("");
+    setShareUrl("");
+    setIsGeneratingShare(false);
+  };
+
+  const handleGenerateShare = async () => {
+    if (!remoteOrder?.id) {
+      return;
+    }
+
+    try {
+      setIsGeneratingShare(true);
+      setShareError("");
+      const data = await apiRequest(`/orders/${remoteOrder.id}/share`, {
+        method: "POST",
+      });
+      setShareUrl(buildSharedOrderUrl(data.share?.shareToken));
+    } catch (requestError) {
+      setShareError(requestError.message || "Unable to generate a pickup QR code.");
+    } finally {
+      setIsGeneratingShare(false);
+    }
   };
 
   const remoteOrderView = useMemo(() => {
@@ -404,16 +449,39 @@ const OrderTracking = () => {
   const displayedItemsCount = remoteOrderView?.itemsCount || 12;
   const displayedTrackedItems = remoteOrderView?.trackedItems || trackedItems;
 
+  if (isSharedAccess && isLoadingOrder) {
+    return (
+      <section className="mx-auto w-full max-w-[860px] rounded-[1.5rem] bg-white px-6 py-8 text-[0.95rem] text-slate-500 shadow-[0_6px_24px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+        <div className="flex items-center gap-3">
+          <LoaderCircle className="h-4 w-4 animate-spin text-[var(--color-primary)]" />
+          <span>Loading shared pickup order...</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (isSharedAccess && (loadError || !remoteOrder)) {
+    return (
+      <section className="mx-auto w-full max-w-[860px] rounded-[1.5rem] bg-white px-6 py-8 shadow-[0_6px_24px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+        <div className="rounded-[1rem] bg-red-50 px-4 py-4 text-[0.9rem] text-red-600">
+          {loadError || "This shared pickup order is unavailable."}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto w-full max-w-[1180px] space-y-6">
       <div className="rounded-lg bg-white px-6 py-7 shadow-md sm:px-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h1 className="text-lg font-inter font-bold text-slate-900">
-              Order #{displayOrderId}
+              {isSharedAccess ? "Shared Pickup Order" : `Order #${displayOrderId}`}
             </h1>
             <p className="mt-3 font-roboto text-sm text-gray-500 ">
-              Created on {orderCreatedAtText}
+              {isSharedAccess
+                ? `Shared pickup access for order #${displayOrderId}`
+                : `Created on ${orderCreatedAtText}`}
             </p>
           </div>
 
@@ -421,10 +489,20 @@ const OrderTracking = () => {
             <span className={remoteOrderView?.statusClassName || "rounded-full bg-amber-100 px-4 py-1 text-sm font-semibold text-[#2c4a7d]"}>
               {orderStatus}
             </span>
-            <button className="inline-flex items-center justify-center gap-1 text-base font-medium text-[#2c4a7d] transition-colors hover:text-[#415a81]">
-              <DownloadIcon className="h-4 text-sm w-4" />
-              <span className="font-mono text-sm text-md">Share Order</span>
-            </button>
+            {!isSharedAccess && remoteOrder && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsShareModalOpen(true);
+                  setShareError("");
+                  setShareUrl("");
+                }}
+                className="inline-flex items-center justify-center gap-1 text-base font-medium text-[#2c4a7d] transition-colors hover:text-[#415a81]"
+              >
+                <DownloadIcon className="h-4 text-sm w-4" />
+                <span className="font-mono text-sm text-md">Share Order</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -548,14 +626,16 @@ const OrderTracking = () => {
             <p className="mt-1 text-sm leading-6 text-slate-500">
               {pickupInstructions}
             </p>
-            <Button
-              variant="primary"
-              size="md"
-              className="mt-5 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-white hover:bg-teal-800"
-            >
-              <CalendarClock className="h-4 w-4" />
-              <span>Change Pickup Time</span>
-            </Button>
+            {!isSharedAccess && (
+              <Button
+                variant="primary"
+                size="md"
+                className="mt-5 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-white hover:bg-teal-800"
+              >
+                <CalendarClock className="h-4 w-4" />
+                <span>Change Pickup Time</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -614,95 +694,137 @@ const OrderTracking = () => {
         </div>
       </div>
 
-      <div className="rounded-lg bg-white px-6 py-5 shadow-md ring-1 ring-slate-100 sm:px-8">
-        <h2 className="text-sm font-semibold text-slate-800">Order Actions</h2>
+      {!isSharedAccess && (
+        <>
+          <div className="rounded-lg bg-white px-6 py-5 shadow-md ring-1 ring-slate-100 sm:px-8">
+            <h2 className="text-sm font-semibold text-slate-800">Order Actions</h2>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Button
-            variant="secondary"
-            size="md"
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
-          >
-            <Download className="h-4 w-4" />
-            <span>Download Receipt</span>
-          </Button>
-          <Button
-            variant="secondary"
-            size="md"
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
-          >
-            <Flag className="h-4 w-4" />
-            <span>Report Issue</span>
-          </Button>
-          <Button
-            variant="secondary"
-            size="md"
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
-          >
-            <Headphones className="h-4 w-4" />
-            <span>Contact Support</span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-white px-6 py-5 shadow-md ring-1 ring-slate-100 sm:px-8">
-        <ToggleSwitch
-          id="pickup-reminders"
-          label="Pickup Reminders"
-          description="Get notified when your order is ready for pickup"
-          enabled={pickupRemindersEnabled}
-          onChange={setPickupRemindersEnabled}
-        />
-
-        <div className="mt-4 space-y-3">
-          {[
-            {
-              key: "sms",
-              label: "SMS Notifications",
-              description: "Receive text messages for order updates",
-            },
-            {
-              key: "email",
-              label: "Email Notifications",
-              description: "Receive email updates for order progress",
-            },
-          ].map((item) => (
-            <label
-              key={item.key}
-              className="flex cursor-pointer items-start gap-3"
-            >
-              <input
-                type="checkbox"
-                checked={notificationPreferences[item.key]}
-                onChange={() => toggleNotificationPreference(item.key)}
-                className="sr-only"
-              />
-              <div
-                className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-                  notificationPreferences[item.key]
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]"
-                    : "border-slate-400 bg-white"
-                }`}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
               >
-                {notificationPreferences[item.key] && (
-                  <Check
-                    className="h-2.5 w-2.5 text-[var(--color-primary)]"
-                    strokeWidth={3}
+                <Download className="h-4 w-4" />
+                <span>Download Receipt</span>
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
+              >
+                <Flag className="h-4 w-4" />
+                <span>Report Issue</span>
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
+              >
+                <Headphones className="h-4 w-4" />
+                <span>Contact Support</span>
+              </Button>
+            </div>
+          </div>
+
+          {remoteOrder && (
+            <div className="rounded-lg bg-white px-6 py-5 shadow-md ring-1 ring-slate-100 sm:px-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-800">
+                    Pickup Share QR Code
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                    Generate a secure QR code and share link for this order so someone else can open the pickup details on your website when collecting it for you.
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => {
+                    setIsShareModalOpen(true);
+                    setShareError("");
+                    setShareUrl("");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
+                >
+                  <QrCode className="h-4 w-4" />
+                  <span>Generate QR</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-lg bg-white px-6 py-5 shadow-md ring-1 ring-slate-100 sm:px-8">
+            <ToggleSwitch
+              id="pickup-reminders"
+              label="Pickup Reminders"
+              description="Get notified when your order is ready for pickup"
+              enabled={pickupRemindersEnabled}
+              onChange={setPickupRemindersEnabled}
+            />
+
+            <div className="mt-4 space-y-3">
+              {[
+                {
+                  key: "sms",
+                  label: "SMS Notifications",
+                  description: "Receive text messages for order updates",
+                },
+                {
+                  key: "email",
+                  label: "Email Notifications",
+                  description: "Receive email updates for order progress",
+                },
+              ].map((item) => (
+                <label
+                  key={item.key}
+                  className="flex cursor-pointer items-start gap-3"
+                >
+                  <input
+                    type="checkbox"
+                    checked={notificationPreferences[item.key]}
+                    onChange={() => toggleNotificationPreference(item.key)}
+                    className="sr-only"
                   />
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  {item.label}
-                </p>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {item.description}
-                </p>
-              </div>
-            </label>
-          ))}
-        </div>
-      </div>
+                  <div
+                    className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                      notificationPreferences[item.key]
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]"
+                        : "border-slate-400 bg-white"
+                    }`}
+                  >
+                    {notificationPreferences[item.key] && (
+                      <Check
+                        className="h-2.5 w-2.5 text-[var(--color-primary)]"
+                        strokeWidth={3}
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {item.label}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {item.description}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      <OrderShareModal
+        error={shareError}
+        isGenerating={isGeneratingShare}
+        isOpen={isShareModalOpen}
+        onClose={closeShareModal}
+        onGenerate={handleGenerateShare}
+        orderLabel={displayOrderId ? `order #${displayOrderId}` : "this order"}
+        shareUrl={shareUrl}
+      />
     </section>
   );
 };
