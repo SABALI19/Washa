@@ -1,16 +1,11 @@
+import { useEffect, useState } from "react";
+import { Copy, ExternalLink, LoaderCircle, QrCode, X } from "lucide-react";
+
 import Button from "./Button";
-import {
-  Copy,
-  ExternalLink,
-  LoaderCircle,
-  QrCode,
-  X,
-} from "lucide-react";
 import {
   buildOrderShareQrCodeUrl,
   copyTextToClipboard,
 } from "../utils/orderShare.js";
-import { useEffect, useState } from "react";
 
 const OrderShareModal = ({
   error = "",
@@ -24,9 +19,7 @@ const OrderShareModal = ({
   const [copyMessage, setCopyMessage] = useState("");
 
   useEffect(() => {
-    if (!isOpen) {
-      setCopyMessage("");
-    }
+    setCopyMessage("");
   }, [isOpen, shareUrl]);
 
   if (!isOpen) {
@@ -43,33 +36,38 @@ const OrderShareModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/45 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-[560px] rounded-[1.6rem] bg-white p-6 shadow-[0_28px_70px_rgba(15,23,42,0.24)] sm:p-7">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-primary)]">
-              Pickup QR
-            </p>
-            <h2 className="mt-2 text-[1.5rem] font-semibold tracking-[-0.03em] text-slate-900">
-              Generate a pickup QR code
-            </h2>
-            <p className="mt-3 text-[0.92rem] leading-7 text-slate-500">
-              Create a secure share link for {orderLabel}. The person handling pickup can open it from their phone or scan the QR code to view the order details on your website.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Close pickup QR modal"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <div
+      className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-[560px] max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-[1.35rem] bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.24)] sm:max-h-[calc(100vh-2rem)] sm:rounded-[1.6rem] sm:p-6"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-600 sm:right-4 sm:top-4"
+          aria-label="Close pickup QR modal"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="pr-10">
+          <p className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-primary)]">
+            Pickup QR
+          </p>
+          <h2 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[1.5rem]">
+            Generate a pickup QR code
+          </h2>
+          <p className="mt-3 text-[0.86rem] leading-6 text-slate-500 sm:text-[0.92rem] sm:leading-7">
+            Create a secure share link for {orderLabel}. The person handling pickup can open it from their phone or scan the QR code to view the order details on your website.
+          </p>
         </div>
 
         {!shareUrl ? (
-          <div className="mt-6 rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 p-5">
-            <div className="flex items-start gap-4">
+          <div className="mt-5 rounded-[1.1rem] border border-dashed border-slate-200 bg-slate-50 p-4 sm:mt-6 sm:rounded-[1.25rem] sm:p-5">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--color-primary)] shadow-sm">
                 <QrCode className="h-6 w-6" />
               </div>
@@ -77,15 +75,15 @@ const OrderShareModal = ({
                 <p className="text-[0.92rem] font-semibold text-slate-900">
                   Share this order with a pickup helper
                 </p>
-                <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
-                  We’ll generate a dedicated link and QR code for this order. Anyone with that link can open the shared pickup view, so only send it to the person you trust to collect the order for you.
+                <p className="mt-2 text-[0.84rem] leading-6 text-slate-500 sm:text-[0.86rem]">
+                  We&apos;ll generate a dedicated link and QR code for this order. Anyone with that link can open the shared pickup view, so only send it to the person you trust to collect the order for you.
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="mt-6 grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <div className="rounded-[1.25rem] bg-slate-50 p-4">
+          <div className="mt-5 grid gap-4 sm:mt-6 sm:gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <div className="mx-auto w-full max-w-[260px] rounded-[1.1rem] bg-slate-50 p-3 sm:max-w-none sm:rounded-[1.25rem] sm:p-4">
               <img
                 src={buildOrderShareQrCodeUrl(shareUrl)}
                 alt={`QR code for ${orderLabel}`}
@@ -93,7 +91,7 @@ const OrderShareModal = ({
               />
             </div>
             <div className="space-y-4">
-              <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-4 sm:rounded-[1.1rem]">
                 <p className="text-[0.75rem] font-semibold uppercase tracking-[0.1em] text-slate-500">
                   Share Link
                 </p>
@@ -102,12 +100,12 @@ const OrderShareModal = ({
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button
                   variant="primary"
                   size="md"
                   onClick={handleCopyLink}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.82rem] font-semibold"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.82rem] font-semibold sm:w-auto"
                 >
                   <Copy className="h-4 w-4" />
                   <span>Copy Link</span>
@@ -116,7 +114,7 @@ const OrderShareModal = ({
                   variant="secondary"
                   size="md"
                   onClick={() => window.open(shareUrl, "_blank", "noopener,noreferrer")}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.82rem] font-semibold"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.82rem] font-semibold sm:w-auto"
                 >
                   <ExternalLink className="h-4 w-4" />
                   <span>Open Shared Page</span>
@@ -138,12 +136,12 @@ const OrderShareModal = ({
           </div>
         )}
 
-        <div className="mt-6 flex flex-wrap justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
           <Button
             variant="secondary"
             size="md"
             onClick={onClose}
-            className="rounded-xl px-4 py-2 text-[0.82rem] font-semibold"
+            className="w-full rounded-xl px-4 py-2 text-[0.82rem] font-semibold sm:w-auto"
           >
             Close
           </Button>
@@ -153,9 +151,13 @@ const OrderShareModal = ({
               size="md"
               onClick={onGenerate}
               disabled={isGenerating}
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.82rem] font-semibold"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.82rem] font-semibold sm:w-auto"
             >
-              {isGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+              {isGenerating ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <QrCode className="h-4 w-4" />
+              )}
               <span>{isGenerating ? "Generating..." : "Generate Link & QR"}</span>
             </Button>
           )}
