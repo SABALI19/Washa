@@ -67,8 +67,6 @@ const activePrimaryBtn =
   "bg-[#2c4a7d] text-white shadow-[inset_0_2px_6px_rgba(0,0,0,0.18)] scale-[0.97]";
 const activeHeaderControlBtn =
   "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-[inset_0_2px_6px_rgba(0,0,0,0.18)] scale-[0.97]";
-const activeSecondaryBtn =
-  "bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-[inset_0_2px_4px_rgba(44,74,125,0.12)] scale-[0.97]";
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 const fallbackStatCards = [
