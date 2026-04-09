@@ -350,6 +350,7 @@ const PickupSchedule = () => {
   const [showSearch,        setShowSearch]        = useState(false);
   const [searchQuery,       setSearchQuery]       = useState("");
   const searchInputRef = useRef(null);
+  const quickActionResetTimeoutRef = useRef(null);
 
   // order filter
   const [activeFilter,   setActiveFilter]   = useState("all");
@@ -406,15 +407,50 @@ const PickupSchedule = () => {
   };
 
   const handleQuickAction = (actionId) => {
+    if (quickActionResetTimeoutRef.current) {
+      clearTimeout(quickActionResetTimeoutRef.current);
+      quickActionResetTimeoutRef.current = null;
+    }
+
+    if (actionId === "check-in") {
+      setActiveFilter("ready");
+      setShowSearch(true);
+      setActiveQuickAction(actionId);
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+      return;
+    }
+
     if (actionId === "manual-entry") {
       const next = !showSearch;
+      setActiveFilter("all");
       setShowSearch(next);
       setActiveQuickAction(next ? actionId : null);
       if (next) setTimeout(() => searchInputRef.current?.focus(), 50);
       return;
     }
+
+    if (actionId === "print") {
+      setActiveQuickAction(actionId);
+      if (typeof window !== "undefined") {
+        window.print();
+      }
+      quickActionResetTimeoutRef.current = setTimeout(() => {
+        setActiveQuickAction((prev) => (prev === actionId ? null : prev));
+        quickActionResetTimeoutRef.current = null;
+      }, 300);
+      return;
+    }
+
     setActiveQuickAction((prev) => (prev === actionId ? null : actionId));
   };
+
+  useEffect(() => {
+    return () => {
+      if (quickActionResetTimeoutRef.current) {
+        clearTimeout(quickActionResetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ── render ────────────────────────────────────────────────────────────────────
   return (
