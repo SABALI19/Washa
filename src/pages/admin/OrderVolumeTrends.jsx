@@ -1,55 +1,66 @@
 import Card from "../../components/Card.jsx";
 
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const totalOrders  = [145, 162, 138, 175, 190, 205, 160];
-const newCustomers = [32,  40,  28,  45,  50,  48,  35];
-const returning    = [105, 118, 108, 128, 138, 155, 122];
+const fallbackLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const fallbackTotalOrders = [145, 162, 138, 175, 190, 205, 160];
+const fallbackNewCustomers = [32, 40, 28, 45, 50, 48, 35];
+const fallbackReturning = [105, 118, 108, 128, 138, 155, 122];
 
-const W = 560, H = 180;
-const padL = 36, padR = 16, padT = 12, padB = 28;
-const innerW = W - padL - padR;
-const innerH = H - padT - padB;
-const dataMax = 260;
-
-const toX = (i) => padL + (i / (days.length - 1)) * innerW;
-const toY = (v) => padT + ((dataMax - v) / dataMax) * innerH;
-
-const smoothPath = (data) => {
-  const pts = data.map((v, i) => ({ x: toX(i), y: toY(v) }));
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const cx = (pts[i].x + pts[i + 1].x) / 2;
-    d += ` C ${cx} ${pts[i].y}, ${cx} ${pts[i + 1].y}, ${pts[i + 1].x} ${pts[i + 1].y}`;
-  }
-  return d;
-};
-
-const areaPath = (data, lineD) => {
-  const pts = data.map((v, i) => ({ x: toX(i), y: toY(v) }));
-  return `${lineD} L ${pts[pts.length - 1].x} ${H - padB} L ${pts[0].x} ${H - padB} Z`;
-};
-
-const yTicks = [0, 50, 100, 150, 200, 250];
-
-const totalLine  = smoothPath(totalOrders);
-const newLine    = smoothPath(newCustomers);
-const returnLine = smoothPath(returning);
+const width = 560;
+const height = 180;
+const padLeft = 36;
+const padRight = 16;
+const padTop = 12;
+const padBottom = 28;
 
 const Dot = ({ color }) => (
-  <span
-    className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
-    style={{ backgroundColor: color }}
-  />
+  <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
 );
 
-const OrderVolumeTrends = () => {
+const buildPath = (values, maxValue) => {
+  const innerWidth = width - padLeft - padRight;
+  const innerHeight = height - padTop - padBottom;
+  const toX = (index, total) => padLeft + (index / Math.max(total - 1, 1)) * innerWidth;
+  const toY = (value) => padTop + ((maxValue - value) / maxValue) * innerHeight;
+  const points = values.map((value, index) => ({ x: toX(index, values.length), y: toY(value) }));
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const controlX = (points[index].x + points[index + 1].x) / 2;
+    path += ` C ${controlX} ${points[index].y}, ${controlX} ${points[index + 1].y}, ${points[index + 1].x} ${points[index + 1].y}`;
+  }
+
+  return { path, points };
+};
+
+const buildAreaPath = (linePath, points) =>
+  `${linePath} L ${points[points.length - 1].x} ${height - padBottom} L ${points[0].x} ${height - padBottom} Z`;
+
+const OrderVolumeTrends = ({
+  labels = fallbackLabels,
+  newCustomers = fallbackNewCustomers,
+  returning = fallbackReturning,
+  totalOrders = fallbackTotalOrders,
+}) => {
+  const resolvedLabels = labels.length > 0 ? labels : fallbackLabels;
+  const resolvedTotalOrders = totalOrders.length > 0 ? totalOrders : fallbackTotalOrders;
+  const resolvedNewCustomers = newCustomers.length > 0 ? newCustomers : fallbackNewCustomers;
+  const resolvedReturning = returning.length > 0 ? returning : fallbackReturning;
+  const maxValue = Math.max(
+    ...resolvedTotalOrders,
+    ...resolvedNewCustomers,
+    ...resolvedReturning,
+    1,
+  );
+  const totalLine = buildPath(resolvedTotalOrders, maxValue);
+  const newLine = buildPath(resolvedNewCustomers, maxValue);
+  const returningLine = buildPath(resolvedReturning, maxValue);
+  const yTicks = Array.from({ length: 6 }, (_, index) => Math.round((maxValue / 5) * index));
+
   return (
     <Card className="rounded-[1rem] border-slate-100 p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 className="text-[1rem] font-semibold text-slate-900">
-          Order Volume Trends
-        </h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[1rem] font-semibold text-slate-900">Order Volume Trends</h2>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
             <Dot color="#0f766e" /> Total Orders
@@ -63,10 +74,9 @@ const OrderVolumeTrends = () => {
         </div>
       </div>
 
-      {/* Chart */}
       <div className="overflow-x-auto">
         <svg
-          viewBox={`0 0 ${W} ${H}`}
+          viewBox={`0 0 ${width} ${height}`}
           className="w-full min-w-[400px]"
           style={{ height: 180 }}
           role="img"
@@ -83,40 +93,32 @@ const OrderVolumeTrends = () => {
             </linearGradient>
           </defs>
 
-          {/* Y-axis grid + labels */}
           {yTicks.map((tick) => {
-            const y = toY(tick);
+            const y = padTop + ((maxValue - tick) / maxValue) * (height - padTop - padBottom);
+
             return (
               <g key={tick}>
-                <line x1={padL} y1={y} x2={W - padR} y2={y}
-                  stroke="#e2e8f0" strokeWidth="0.8" />
-                <text x={padL - 6} y={y + 4} fontSize="9" textAnchor="end" fill="#94a3b8">
+                <line x1={padLeft} y1={y} x2={width - padRight} y2={y} stroke="#e2e8f0" strokeWidth="0.8" />
+                <text x={padLeft - 6} y={y + 4} fontSize="9" textAnchor="end" fill="#94a3b8">
                   {tick}
                 </text>
               </g>
             );
           })}
 
-          {/* Area fills */}
-          <path d={areaPath(totalOrders, totalLine)} fill="url(#grad-total)" />
-          <path d={areaPath(returning, returnLine)}  fill="url(#grad-return)" />
+          <path d={buildAreaPath(totalLine.path, totalLine.points)} fill="url(#grad-total)" />
+          <path d={buildAreaPath(returningLine.path, returningLine.points)} fill="url(#grad-return)" />
+          <path d={returningLine.path} fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+          <path d={newLine.path} fill="none" stroke="#2dd4bf" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+          <path d={totalLine.path} fill="none" stroke="#0f766e" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
 
-          {/* Lines */}
-          <path d={returnLine} fill="none" stroke="#94a3b8" strokeWidth="1.8"
-            strokeLinejoin="round" strokeLinecap="round" />
-          <path d={newLine}    fill="none" stroke="#2dd4bf" strokeWidth="1.8"
-            strokeLinejoin="round" strokeLinecap="round" />
-          <path d={totalLine}  fill="none" stroke="#0f766e" strokeWidth="2"
-            strokeLinejoin="round" strokeLinecap="round" />
-
-          {/* Dots + X labels */}
-          {days.map((day, i) => (
-            <g key={day}>
-              <circle cx={toX(i)} cy={toY(totalOrders[i])}  r="2.5" fill="white" stroke="#0f766e" strokeWidth="1.5" />
-              <circle cx={toX(i)} cy={toY(newCustomers[i])} r="2.5" fill="white" stroke="#2dd4bf" strokeWidth="1.5" />
-              <circle cx={toX(i)} cy={toY(returning[i])}    r="2.5" fill="white" stroke="#94a3b8" strokeWidth="1.5" />
-              <text x={toX(i)} y={H - 6} fontSize="9.5" textAnchor="middle" fill="#94a3b8">
-                {day}
+          {resolvedLabels.map((label, index) => (
+            <g key={label}>
+              <circle cx={totalLine.points[index].x} cy={totalLine.points[index].y} r="2.5" fill="white" stroke="#0f766e" strokeWidth="1.5" />
+              <circle cx={newLine.points[index].x} cy={newLine.points[index].y} r="2.5" fill="white" stroke="#2dd4bf" strokeWidth="1.5" />
+              <circle cx={returningLine.points[index].x} cy={returningLine.points[index].y} r="2.5" fill="white" stroke="#94a3b8" strokeWidth="1.5" />
+              <text x={totalLine.points[index].x} y={height - 6} fontSize="9.5" textAnchor="middle" fill="#94a3b8">
+                {label}
               </text>
             </g>
           ))}

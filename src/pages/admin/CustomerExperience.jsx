@@ -1,106 +1,88 @@
 import Card from "../../components/Card.jsx";
 
-const ratings = [120, 205, 160, 92, 86, 128, 146];
-const ratingLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const feedbackWords = [
-  { text: "Customer", size: "text-[1.95rem]" },
-  { text: "Feedback", size: "text-[1.95rem]" },
-  { text: "Service", size: "text-[1rem]" },
-  { text: "friendly", size: "text-[0.68rem]" },
-  { text: "helpful", size: "text-[0.72rem]" },
-  { text: "delivery", size: "text-[0.65rem]" },
-  { text: "staff", size: "text-[0.72rem]" },
-  { text: "timely", size: "text-[0.68rem]" },
-  { text: "quality", size: "text-[0.68rem]" },
-  { text: "clean", size: "text-[0.62rem]" },
-  { text: "service", size: "text-[0.82rem]" },
-  { text: "trustworthy", size: "text-[0.62rem]" },
-  { text: "satisfied", size: "text-[0.62rem]" },
-  { text: "fast", size: "text-[0.62rem]" },
-  { text: "professional", size: "text-[0.62rem]" },
-  { text: "pickup", size: "text-[0.6rem]" },
-  { text: "careful", size: "text-[0.6rem]" },
-  { text: "cleaners", size: "text-[0.6rem]" },
+const fallbackMetricBlocks = [
+  { label: "Issue-Free Orders", tone: "primary", value: "94%" },
+  { label: "Verified Orders", tone: "primary", value: "82%" },
+  { label: "Dispute Rate", tone: "danger", value: "4.3%" },
+];
+const fallbackDistribution = [120, 205, 160, 92, 86, 128, 146];
+const fallbackDistributionLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const fallbackFeedbackWords = [
+  { size: "text-[1.95rem]", text: "Wash & Fold" },
+  { size: "text-[1.95rem]", text: "Dry Cleaning" },
+  { size: "text-[1rem]", text: "Express" },
+  { size: "text-[0.78rem]", text: "Ironing" },
+  { size: "text-[0.78rem]", text: "Pickup" },
+  { size: "text-[0.78rem]", text: "Beddings" },
 ];
 
 const chartWidth = 220;
 const chartHeight = 110;
-const maxValue = 220;
 const paddingLeft = 18;
 const paddingBottom = 18;
 const barWidth = 18;
 const barGap = 9;
 
-const CustomerExperience = () => {
+const CustomerExperience = ({
+  distribution = fallbackDistribution,
+  distributionLabel = "Daily Completions",
+  distributionLabels = fallbackDistributionLabels,
+  feedbackWords = fallbackFeedbackWords,
+  metricBlocks = fallbackMetricBlocks,
+  wordCloudLabel = "Most Requested Services",
+}) => {
+  const resolvedDistribution = distribution.length > 0 ? distribution : fallbackDistribution;
+  const resolvedDistributionLabels =
+    distributionLabels.length === resolvedDistribution.length
+      ? distributionLabels
+      : fallbackDistributionLabels.slice(0, resolvedDistribution.length);
+  const resolvedFeedbackWords = feedbackWords.length > 0 ? feedbackWords : fallbackFeedbackWords;
+  const resolvedMetricBlocks = metricBlocks.length > 0 ? metricBlocks : fallbackMetricBlocks;
+  const maxValue = Math.max(...resolvedDistribution, 1);
+
   return (
     <Card className="rounded-[1rem] border-slate-100 p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
-      <h2 className="text-[1rem] font-semibold text-slate-900">Customer Experience</h2>
+      <h2 className="text-[1rem] font-semibold text-slate-900">Quality Signals</h2>
 
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <MetricBlock label="Overall Rating" value="4.8" tone="primary" />
-        <MetricBlock label="Net Promoter Score" value="72" tone="primary" />
-        <MetricBlock label="Dispute Rate" value="0.8%" tone="danger" />
+        {resolvedMetricBlocks.map((metric) => (
+          <MetricBlock key={metric.label} {...metric} />
+        ))}
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <div>
-          <p className="text-[0.78rem] font-medium text-slate-700">Rating Distribution</p>
+          <p className="text-[0.78rem] font-medium text-slate-700">{distributionLabel}</p>
           <div className="mt-2 overflow-x-auto">
             <svg
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
               className="h-[104px] w-full min-w-[220px]"
               role="img"
-              aria-label="Rating distribution chart"
+              aria-label={`${distributionLabel} chart`}
             >
-              {[0, 50, 100, 150, 200].map((tick) => {
+              {[0, Math.round(maxValue * 0.25), Math.round(maxValue * 0.5), Math.round(maxValue * 0.75), maxValue].map((tick) => {
                 const y = 8 + ((maxValue - tick) / maxValue) * (chartHeight - 26);
 
                 return (
                   <g key={tick}>
-                    <line
-                      x1={paddingLeft}
-                      y1={y}
-                      x2={chartWidth - 8}
-                      y2={y}
-                      stroke="#e2e8f0"
-                      strokeWidth="1"
-                    />
-                    <text
-                      x={paddingLeft - 6}
-                      y={y + 3}
-                      fontSize="8"
-                      textAnchor="end"
-                      fill="#94a3b8"
-                    >
+                    <line x1={paddingLeft} y1={y} x2={chartWidth - 8} y2={y} stroke="#e2e8f0" strokeWidth="1" />
+                    <text x={paddingLeft - 6} y={y + 3} fontSize="8" textAnchor="end" fill="#94a3b8">
                       {tick}
                     </text>
                   </g>
                 );
               })}
 
-              {ratings.map((value, index) => {
+              {resolvedDistribution.map((value, index) => {
                 const x = paddingLeft + index * (barWidth + barGap);
                 const barHeight = (value / maxValue) * (chartHeight - 26);
                 const y = chartHeight - paddingBottom - barHeight;
 
                 return (
-                  <g key={ratingLabels[index]}>
-                    <rect
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      rx="2"
-                      fill="#5b74c7"
-                    />
-                    <text
-                      x={x + barWidth / 2}
-                      y={chartHeight - 5}
-                      fontSize="8"
-                      textAnchor="middle"
-                      fill="#94a3b8"
-                    >
-                      {index % 2 === 0 ? ratingLabels[index] : ""}
+                  <g key={resolvedDistributionLabels[index] || index}>
+                    <rect x={x} y={y} width={barWidth} height={barHeight} rx="2" fill="#5b74c7" />
+                    <text x={x + barWidth / 2} y={chartHeight - 5} fontSize="8" textAnchor="middle" fill="#94a3b8">
+                      {index % 2 === 0 ? resolvedDistributionLabels[index] : ""}
                     </text>
                   </g>
                 );
@@ -110,9 +92,9 @@ const CustomerExperience = () => {
         </div>
 
         <div>
-          <p className="text-[0.78rem] font-medium text-slate-700">Common Feedback</p>
+          <p className="text-[0.78rem] font-medium text-slate-700">{wordCloudLabel}</p>
           <div className="mt-2 flex min-h-[96px] flex-wrap items-center justify-center gap-x-2 gap-y-1 overflow-hidden rounded-md bg-[#20252d] px-4 py-4 text-white">
-            {feedbackWords.map((word) => (
+            {resolvedFeedbackWords.map((word) => (
               <span key={word.text} className={`${word.size} font-semibold leading-none`}>
                 {word.text}
               </span>
@@ -124,9 +106,8 @@ const CustomerExperience = () => {
   );
 };
 
-const MetricBlock = ({ label, value, tone }) => {
-  const toneClassName =
-    tone === "danger" ? "text-[#dc2626]" : "text-[var(--color-primary)]";
+const MetricBlock = ({ label, tone, value }) => {
+  const toneClassName = tone === "danger" ? "text-[#dc2626]" : "text-[var(--color-primary)]";
 
   return (
     <div className="text-center">

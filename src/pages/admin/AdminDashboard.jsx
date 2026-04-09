@@ -5,6 +5,7 @@ import OrdervolumeTrend from "../../components/common/OrdervolumeTrend.jsx";
 import RecentActivity from "../../components/common/RecentActivity.jsx";
 import StatsCards from "../../components/common/StatsCards.jsx";
 import Card from "../../components/Card.jsx";
+import useAdminDashboard from "../../hooks/useAdminDashboard.js";
 import AdminSidebar from "../../layouts/AdminSidebar.jsx";
 import {
   Clock3,
@@ -12,38 +13,31 @@ import {
   Download,
   Package,
   RefreshCw,
-  Settings,
-  Star,
+  ShieldCheck,
 } from "lucide-react";
 
-const stats = [
-  {
-    title: "Total Orders Today",
-    value: "142",
-    change: "+12%",
-    Icon: Package,
-  },
-  {
-    title: "Active Orders",
-    value: "87",
-    change: "+8%",
-    Icon: Clock3,
-  },
-  {
-    title: "Revenue Today",
-    value: "$2,840",
-    change: "+15%",
-    Icon: DollarSign,
-  },
-  {
-    title: "Customer Satisfaction",
-    value: "4.8",
-    subtitle: "32 reviews",
-    Icon: Star,
-  },
-];
+const statIconMap = {
+  "active-orders": Clock3,
+  "fulfillment-rate": ShieldCheck,
+  "orders-today": Package,
+  "revenue-today": DollarSign,
+};
 
-const adminQuickActions = [
+const formatGeneratedAt = (value) => {
+  if (!value) {
+    return "Dashboard unavailable";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(value));
+};
+
+const fallbackQuickActions = [
   "View All Orders",
   "Dispute Management",
   "Performance Reports",
@@ -51,6 +45,10 @@ const adminQuickActions = [
 ];
 
 const AdminDashboard = () => {
+  const { dashboard, error, isLoading } = useAdminDashboard();
+  const stats = dashboard?.stats || [];
+  const quickActions = dashboard?.quickActions || fallbackQuickActions;
+
   return (
     <section className="min-h-screen bg-[var(--color-surface)]">
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
@@ -64,7 +62,7 @@ const AdminDashboard = () => {
                   Admin Dashboard
                 </h1>
                 <p className="mt-1.5 text-[0.72rem] text-slate-500">
-                  December 15, 2024 • 2:30 PM
+                  {formatGeneratedAt(dashboard?.generatedAt)}
                 </p>
               </div>
 
@@ -88,30 +86,48 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {error && (
+              <div className="mt-4 rounded-[1rem] bg-red-50 px-4 py-3 text-[0.82rem] text-red-600">
+                {error}
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="mt-4 rounded-[1rem] bg-white px-4 py-3 text-[0.82rem] text-slate-500 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
+                Loading admin dashboard...
+              </div>
+            )}
+
             <div className="mt-4 grid gap-3 lg:grid-cols-4">
               {stats.map((stat) => (
-                <StatsCards key={stat.title} {...stat} />
+                <StatsCards
+                  key={stat.id}
+                  {...stat}
+                  Icon={statIconMap[stat.id] || Package}
+                />
               ))}
             </div>
 
             <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
-              <OrdervolumeTrend />
-              <CurrentOrderStatus />
+              <OrdervolumeTrend
+                dataPoints={dashboard?.orderVolumeTrend?.dataPoints}
+                labels={dashboard?.orderVolumeTrend?.labels}
+                title="Today’s Intake Trend"
+              />
+              <CurrentOrderStatus items={dashboard?.currentOrderStatus?.items} />
             </div>
 
             <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
-              <RecentActivity />
+              <RecentActivity activities={dashboard?.recentActivity} />
 
               <div className="space-y-4">
-                <AlertsNotification />
+                <AlertsNotification alerts={dashboard?.alerts} />
 
                 <Card className="rounded-[1.2rem] border-slate-100 p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
-                  <h2 className="text-[1rem] font-semibold text-slate-900">
-                    Quick Actions
-                  </h2>
+                  <h2 className="text-[1rem] font-semibold text-slate-900">Quick Actions</h2>
 
                   <div className="mt-4 space-y-2.5">
-                    {adminQuickActions.map((action, index) => (
+                    {quickActions.map((action, index) => (
                       <button
                         key={action}
                         type="button"
