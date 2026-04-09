@@ -597,12 +597,12 @@ const PickupSchedule = () => {
             <OverdueCarousel pickups={resolvedPickupSchedule.overduePickups} />
           </section>
 
-          {/* Stat Cards — 2 cols on mobile, 4 cols on lg+ */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {/* Stat Cards - swipeable on mobile, flexed on large screens */}
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:gap-4 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {resolvedPickupSchedule.statCards.map((card) => (
               <article
                 key={card.id}
-                className="rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-4"
+                className="min-w-[78%] snap-start rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:min-w-[260px] sm:p-4 lg:min-w-0 lg:flex-1 lg:basis-0"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   {card.Icon && (
