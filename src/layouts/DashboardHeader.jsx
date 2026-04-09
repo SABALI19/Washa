@@ -54,16 +54,16 @@ const DashboardHeader = ({
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to={brandLink} className="flex items-center gap-2">
-            <img src={washaLogo} alt="Washa Logo" className="h-10 w-auto" />
-            <span className="text-sm font-semibold text-gray-900">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="flex min-w-0 items-center justify-between gap-3 py-3 sm:h-16 sm:py-0">
+          <Link to={brandLink} className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+            <img src={washaLogo} alt="Washa Logo" className="h-8 w-auto sm:h-10" />
+            <span className="truncate text-sm font-semibold text-gray-900">
               {brandLabel}
             </span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             {isTrackingVariant ? (
               <div className="hidden items-center gap-8 md:flex">
                 <Link
@@ -127,7 +127,7 @@ const DashboardHeader = ({
             {showNotificationBell && (
               <button
                 type="button"
-                className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)]"
+                className="relative rounded-full p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)] sm:p-2"
               >
                 <Bell className="h-5 w-5" />
                 {notificationCount > 0 && (

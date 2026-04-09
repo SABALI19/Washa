@@ -535,13 +535,13 @@ const PickupSchedule = () => {
                 Workflow-synced schedule for {selectedDate}
               </p>
             </div>
-            {/* Stacked controls on mobile, inline row on sm+ */}
-            <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:gap-2">
+            {/* Wrapping filter controls on mobile, inline row on larger screens */}
+            <div className="flex flex-wrap gap-2 sm:items-center">
               <Button
                 variant="primary"
                 size="md"
                 onClick={() => setSelectedDate(getTodayDateValue())}
-                className="w-full rounded-xl px-3 py-2.5 text-[0.78rem] font-semibold sm:w-auto sm:px-4 sm:py-2 sm:text-[0.8rem]"
+                className="min-w-[96px] flex-1 rounded-xl px-2.5 py-2 text-[0.72rem] font-semibold sm:w-auto sm:flex-none sm:px-4 sm:text-[0.8rem]"
               >
                 Today
               </Button>
@@ -549,7 +549,7 @@ const PickupSchedule = () => {
                 variant="secondary"
                 size="md"
                 onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[0.78rem] font-medium sm:w-auto sm:px-4 sm:py-2 sm:text-[0.8rem]"
+                className="inline-flex min-w-[96px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[0.72rem] font-medium sm:w-auto sm:flex-none sm:gap-2 sm:px-4 sm:text-[0.8rem]"
               >
                 <CalendarDays className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 <span className="truncate">Date Picker</span>
@@ -557,10 +557,10 @@ const PickupSchedule = () => {
               <Button
                 variant="secondary"
                 size="md"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[0.78rem] font-medium sm:w-auto sm:px-4 sm:py-2 sm:text-[0.8rem]"
+                className="inline-flex min-w-[140px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[0.72rem] font-medium sm:w-auto sm:flex-none sm:gap-2 sm:px-4 sm:text-[0.8rem]"
               >
                 <Cog className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span>Manage Time Slots</span>
+                <span className="truncate">Manage Time Slots</span>
               </Button>
               <input
                 ref={dateInputRef}

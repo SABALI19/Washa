@@ -367,15 +367,15 @@ const StaffDashboard = () => {
   }, [closeMobileSidebar, setMobileSidebarContent, sidebarContent]);
 
   return (
-    <section className="mx-auto w-full max-w-[1450px]">
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div>
+    <section className="mx-auto w-full min-w-0 max-w-[1450px]">
+      <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <h1 className="text-[1.85rem] font-semibold tracking-[-0.03em] text-slate-900">
               Staff Dashboard
             </h1>
-            <div className="flex items-center gap-3">
-              <p className="text-[0.95rem] text-slate-500">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-[0.95rem] break-words text-slate-500">
                 {formatHeaderTimestamp(resolvedDashboard.generatedAt) || "Dashboard unavailable"}
               </p>
               <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1.5 text-[0.82rem] font-semibold text-[var(--color-primary)]">
@@ -418,7 +418,7 @@ const StaffDashboard = () => {
                     key={order.id}
                     className="rounded-[1.15rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100"
                   >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-[0.98rem] font-semibold text-slate-900">
@@ -458,15 +458,15 @@ const StaffDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-start gap-3 sm:items-end">
+                      <div className="flex w-full flex-col items-start gap-3 sm:w-auto sm:items-end">
                         <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.78rem] font-semibold text-[var(--color-primary)]">
                           {order.items} items
                         </span>
-                        <Link to={`/staff/verification/${order.id}`}>
+                        <Link to={`/staff/verification/${order.id}`} className="w-full sm:w-auto">
                           <Button
                             variant="primary"
                             size="md"
-                            className="rounded-xl px-5 py-2.5 text-[0.82rem] font-semibold"
+                            className="w-full rounded-xl px-4 py-2.5 text-[0.8rem] font-semibold sm:w-auto sm:px-5 sm:text-[0.82rem]"
                           >
                             Start Verification
                           </Button>
@@ -495,7 +495,7 @@ const StaffDashboard = () => {
                     key={order.id}
                     className="rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                       <h3 className="text-[0.98rem] font-semibold text-slate-900">
                         #{order.id}
                       </h3>
@@ -517,7 +517,7 @@ const StaffDashboard = () => {
                       Last updated: {order.time}
                     </p>
 
-                    <div className="mt-4 flex items-center justify-between gap-4">
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                       <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
                         {order.image ? (
                           <img
@@ -534,7 +534,7 @@ const StaffDashboard = () => {
                       <Button
                         variant="secondary"
                         size="md"
-                        className="rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
+                        className="w-full rounded-xl px-3 py-2 text-[0.76rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.78rem]"
                       >
                         Update Status
                       </Button>
@@ -566,9 +566,9 @@ const StaffDashboard = () => {
                       {section.orders.map((order) => (
                         <article
                           key={`${section.label}-${order.id}`}
-                          className="flex flex-col gap-4 rounded-[1rem] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 md:flex-row md:items-center md:justify-between"
+                          className="flex min-w-0 flex-col gap-4 rounded-[1rem] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 md:flex-row md:items-center md:justify-between"
                         >
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <h4 className="text-[0.98rem] font-semibold text-slate-900">
                                 #{order.id}
@@ -592,7 +592,7 @@ const StaffDashboard = () => {
                           <Button
                             variant={order.isActionActive ? "primary" : "secondary"}
                             size="md"
-                            className={`self-start rounded-xl px-4 py-2 text-[0.78rem] font-semibold md:self-auto ${
+                            className={`w-full rounded-xl px-3 py-2 text-[0.76rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.78rem] md:self-auto ${
                               order.isActionActive
                                 ? ""
                                 : "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
