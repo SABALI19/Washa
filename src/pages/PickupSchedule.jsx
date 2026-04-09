@@ -251,6 +251,9 @@ const buildCapacitySummary = (pickupSchedule, resolvedPickupSchedule) => {
   };
 };
 
+// ─── OverdueCarousel ────────────────────────────────────────────────────────
+// One full-width card visible at all times, swipe/drag to navigate.
+// Works at every breakpoint — no separate sm/lg variants needed.
 const OverdueCarousel = ({ pickups }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef(null);
@@ -258,22 +261,15 @@ const OverdueCarousel = ({ pickups }) => {
   const startX = useRef(0);
   const scrollStart = useRef(0);
 
-  const getCardWidth = () => {
-    const el = scrollRef.current;
-    if (!el || pickups.length === 0) return 0;
-    return el.firstElementChild?.getBoundingClientRect().width || 0;
-  };
-
   const scrollToIndex = (index) => {
     const el = scrollRef.current;
     if (!el) return;
     const clamped = Math.min(Math.max(index, 0), pickups.length - 1);
     const targetCard = el.children[clamped];
-    targetCard?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "start",
-    });
+    if (targetCard) {
+      // Use scrollLeft for pixel-perfect snapping
+      el.scrollTo({ left: targetCard.offsetLeft, behavior: "smooth" });
+    }
     setActiveIndex(clamped);
   };
 
@@ -282,9 +278,9 @@ const OverdueCarousel = ({ pickups }) => {
     if (!el || pickups.length === 0) return;
     const cards = Array.from(el.children);
     const closestIndex = cards.reduce((closest, card, index) => {
-      const closestDistance = Math.abs(cards[closest].offsetLeft - el.scrollLeft);
-      const cardDistance = Math.abs(card.offsetLeft - el.scrollLeft);
-      return cardDistance < closestDistance ? index : closest;
+      const closestDist = Math.abs(cards[closest].offsetLeft - el.scrollLeft);
+      const cardDist = Math.abs(card.offsetLeft - el.scrollLeft);
+      return cardDist < closestDist ? index : closest;
     }, 0);
     setActiveIndex(closestIndex);
   };
@@ -306,7 +302,9 @@ const OverdueCarousel = ({ pickups }) => {
     if (!isDragging.current) return;
     isDragging.current = false;
     const delta = startX.current - e.clientX;
-    const threshold = getCardWidth() * 0.2;
+    const el = scrollRef.current;
+    const cardWidth = el?.firstElementChild?.offsetWidth ?? 0;
+    const threshold = cardWidth * 0.2;
     if (Math.abs(delta) > threshold) {
       scrollToIndex(activeIndex + (delta > 0 ? 1 : -1));
     } else {
@@ -314,171 +312,49 @@ const OverdueCarousel = ({ pickups }) => {
     }
   };
 
+  if (pickups.length === 0) return null;
+
   return (
-    <>
-      {/* Mobile (<640px): swipeable snap carousel - ONE CARD AT A TIME */}
-<div className="mt-4 sm:hidden min-w-0 overflow-hidden">
-  <div
-    ref={scrollRef}
-    onScroll={handleScroll}
-    onPointerDown={handlePointerDown}
-    onPointerMove={handlePointerMove}
-    onPointerUp={handlePointerUp}
-    onPointerCancel={handlePointerUp}
-    className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-  >
-    {pickups.map((pickup) => {
-      const customerContactActions = getCustomerContactActions(pickup);
-      const contactSummary = getContactSummary(pickup);
-      return (
-        <article
-          key={`${pickup.id}-${pickup.scheduledDate}`}
-          className="min-w-full shrink-0 snap-center rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
+    <div className="mt-4 w-full min-w-0">
+      {/* ── Scroll container ──
+          overflow-hidden on the wrapper prevents ANY bleed outside the pink card.
+          The inner track uses overflow-x-auto + snap so cards scroll within bounds. */}
+      <div className="w-full overflow-hidden rounded-[0.75rem]">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-1 cursor-grab active:cursor-grabbing select-none [touch-action:pan-x] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          <div className="flex flex-wrap items-start gap-2">
-            <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
-            <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
-          </div>
-          <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
-            Originally scheduled: {pickup.scheduledDate}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#f7dada] px-2.5 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
-              {pickup.overdueText}
-            </span>
-            <span className="text-[0.78rem] text-slate-600">{pickup.items} items</span>
-          </div>
-          {contactSummary && (
-            <p className="mt-3 text-[0.76rem] text-slate-500">{contactSummary}</p>
-          )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {customerContactActions.length > 0 ? (
-              customerContactActions.map((action, index) => (
-                <Button
-                  key={`${pickup.id}-${action.id}`}
-                  variant={index === 0 ? "primary" : "secondary"}
-                  size="md"
-                  onClick={() => launchContactAction(action.href)}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
-                >
-                  <action.Icon className="h-3.5 w-3.5" />
-                  <span className="whitespace-nowrap font-roboto">{action.label}</span>
-                </Button>
-              ))
-            ) : (
-              <span className="text-[0.78rem] font-medium text-slate-400">
-                Contact unavailable
-              </span>
-            )}
-          </div>
-        </article>
-      );
-    })}
-  </div>
-
-  {/* Clickable dot indicators */}
-  {pickups.length > 1 && (
-    <div className="mt-3 flex justify-center gap-1.5">
-      {pickups.map((_, index) => (
-        <button
-          key={index}
-          type="button"
-          aria-label={`Go to pickup ${index + 1}`}
-          onClick={() => scrollToIndex(index)}
-          className={`h-1.5 rounded-full transition-all duration-300 ${
-            index === activeIndex
-              ? "w-5 bg-[var(--color-primary)]"
-              : "w-1.5 bg-slate-300 hover:bg-slate-400"
-          }`}
-        />
-      ))}
-    </div>
-  )}
-</div>
-
-      {/* Tablet (640–1023px): single-column stacked rows */}
-      <div className="mt-4 hidden flex-col gap-3 sm:flex lg:hidden">
-        {pickups.map((pickup) => {
-          const customerContactActions = getCustomerContactActions(pickup);
-          const contactSummary = getContactSummary(pickup);
-          return (
-            <article
-              key={`${pickup.id}-${pickup.scheduledDate}`}
-              className="flex flex-row items-start justify-between gap-4 rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
-            >
-              <div className="min-w-0">
+          {pickups.map((pickup) => {
+            const customerContactActions = getCustomerContactActions(pickup);
+            const contactSummary = getContactSummary(pickup);
+            return (
+              <article
+                key={`${pickup.id}-${pickup.scheduledDate}`}
+                // w-full + shrink-0 = exactly one card fills the visible area
+                className="w-full shrink-0 snap-center snap-always rounded-[0.85rem] bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.06)]"
+              >
                 <div className="flex flex-wrap items-start gap-2">
                   <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
                   <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
                 </div>
-                <p className="mt-2 text-[0.78rem] leading-5 text-slate-500">
+                <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
                   Originally scheduled: {pickup.scheduledDate}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-[#f7dada] px-2.5 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
                     {pickup.overdueText}
                   </span>
                   <span className="text-[0.78rem] text-slate-600">{pickup.items} items</span>
                 </div>
                 {contactSummary && (
-                  <p className="mt-2 text-[0.76rem] text-slate-500">{contactSummary}</p>
+                  <p className="mt-3 text-[0.76rem] text-slate-500 break-all">{contactSummary}</p>
                 )}
-              </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {customerContactActions.length > 0 ? (
-                  customerContactActions.map((action, index) => (
-                    <Button
-                      key={`${pickup.id}-${action.id}`}
-                      variant={index === 0 ? "primary" : "secondary"}
-                      size="md"
-                      onClick={() => launchContactAction(action.href)}
-                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
-                    >
-                      <action.Icon className="h-3.5 w-3.5" />
-                      <span className="whitespace-nowrap font-roboto">{action.label}</span>
-                    </Button>
-                  ))
-                ) : (
-                  <span className="text-[0.78rem] font-medium text-slate-400">
-                    Contact unavailable
-                  </span>
-                )}
-              </div>
-            </article>
-          );
-        })}
-      </div>
-
-      {/* Desktop (≥1024px): 2-column grid */}
-      <div className="mt-4 hidden gap-3 lg:grid lg:grid-cols-2">
-        {pickups.map((pickup) => {
-          const customerContactActions = getCustomerContactActions(pickup);
-          const contactSummary = getContactSummary(pickup);
-          return (
-            <article
-              key={`${pickup.id}-${pickup.scheduledDate}`}
-              className="rounded-[1rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
-            >
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-start gap-2">
-                    <h3 className="text-[0.95rem] font-semibold text-slate-900">#{pickup.id}</h3>
-                    <span className="text-[0.84rem] text-slate-500">- {pickup.customer}</span>
-                  </div>
-                  <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
-                    Originally scheduled: {pickup.scheduledDate}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#f7dada] px-2.5 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">
-                      {pickup.overdueText}
-                    </span>
-                    <span className="text-[0.78rem] text-slate-600">{pickup.items} items</span>
-                  </div>
-                  {contactSummary && (
-                    <p className="mt-3 text-[0.76rem] text-slate-500">{contactSummary}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {customerContactActions.length > 0 ? (
                     customerContactActions.map((action, index) => (
                       <Button
@@ -488,8 +364,8 @@ const OverdueCarousel = ({ pickups }) => {
                         onClick={() => launchContactAction(action.href)}
                         className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.78rem] font-semibold"
                       >
-                        <action.Icon className="h-3.5 w-3.5" />
-                        <span className="whitespace-nowrap font-roboto">{action.label}</span>
+                        <action.Icon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="whitespace-nowrap">{action.label}</span>
                       </Button>
                     ))
                   ) : (
@@ -498,15 +374,35 @@ const OverdueCarousel = ({ pickups }) => {
                     </span>
                   )}
                 </div>
-              </div>
-            </article>
-          );
-        })}
+              </article>
+            );
+          })}
+        </div>
       </div>
-    </>
+
+      {/* Dot indicators */}
+      {pickups.length > 1 && (
+        <div className="mt-3 flex justify-center gap-1.5">
+          {pickups.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              aria-label={`Go to pickup ${index + 1}`}
+              onClick={() => scrollToIndex(index)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                index === activeIndex
+                  ? "w-5 bg-[var(--color-primary)]"
+                  : "w-1.5 bg-[rgba(44,74,125,0.3)] hover:bg-[rgba(44,74,125,0.5)]"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
+// ─── PickupSchedule ──────────────────────────────────────────────────────────
 const PickupSchedule = () => {
   const [selectedDate, setSelectedDate] = useState(getTodayDateValue());
   const dateInputRef = useRef(null);
@@ -521,13 +417,16 @@ const PickupSchedule = () => {
   );
 
   return (
-    <section className="mx-auto w-full min-w-0 max-w-[1500px] px-4 sm:px-6 lg:px-8">
+    // ── Root: clamp width, prevent ANY horizontal bleed ──
+    <section className="mx-auto w-full min-w-0 max-w-[1500px] overflow-x-hidden px-4 sm:px-6 lg:px-8">
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-8 xl:items-start">
-        <div className="min-w-0 space-y-5 sm:space-y-6">
+
+        {/* ── Main column ── */}
+        <div className="min-w-0 w-full overflow-hidden space-y-5 sm:space-y-6">
 
           {/* Header */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="min-w-0">
               <h1 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#2c4a7d] sm:text-[1.6rem]">
                 Pickup Schedule
               </h1>
@@ -535,13 +434,13 @@ const PickupSchedule = () => {
                 Workflow-synced schedule for {selectedDate}
               </p>
             </div>
-            {/* Wrapping filter controls on mobile, inline row on larger screens */}
-            <div className="flex flex-wrap gap-2 sm:items-center">
+            {/* Filter controls — wrap naturally, no fixed widths that overflow */}
+            <div className="flex flex-wrap gap-2 sm:shrink-0 sm:items-center">
               <Button
                 variant="primary"
                 size="md"
                 onClick={() => setSelectedDate(getTodayDateValue())}
-                className="min-w-[96px] flex-1 rounded-xl px-2.5 py-2 text-[0.72rem] font-semibold sm:w-auto sm:flex-none sm:px-4 sm:text-[0.8rem]"
+                className="rounded-xl px-3 py-2 text-[0.72rem] font-semibold sm:px-4 sm:text-[0.8rem]"
               >
                 Today
               </Button>
@@ -549,18 +448,18 @@ const PickupSchedule = () => {
                 variant="secondary"
                 size="md"
                 onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
-                className="inline-flex min-w-[96px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[0.72rem] font-medium sm:w-auto sm:flex-none sm:gap-2 sm:px-4 sm:text-[0.8rem]"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[0.72rem] font-medium sm:gap-2 sm:px-4 sm:text-[0.8rem]"
               >
-                <CalendarDays className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate">Date Picker</span>
+                <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                <span>Date Picker</span>
               </Button>
               <Button
                 variant="secondary"
                 size="md"
-                className="inline-flex min-w-[140px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[0.72rem] font-medium sm:w-auto sm:flex-none sm:gap-2 sm:px-4 sm:text-[0.8rem]"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[0.72rem] font-medium sm:gap-2 sm:px-4 sm:text-[0.8rem]"
               >
-                <Cog className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate">Manage Time Slots</span>
+                <Cog className="h-3.5 w-3.5 shrink-0" />
+                <span>Manage Time Slots</span>
               </Button>
               <input
                 ref={dateInputRef}
@@ -584,36 +483,39 @@ const PickupSchedule = () => {
             </div>
           )}
 
-          {/* Overdue Pickups */}
-          <section className="rounded-[1.35rem] bg-[#f7dada] p-4 shadow-[0_6px_24px_rgba(15,23,42,0.06)]">
+          {/* ── Past Due Pickups ──
+              w-full + overflow-hidden on this section prevents the pink card
+              from ever bleeding outside its container on any screen. */}
+          <section className="w-full min-w-0 overflow-hidden rounded-[1.35rem] bg-[#f7dada] p-4 shadow-[0_6px_24px_rgba(15,23,42,0.06)]">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
                 <h2 className="text-[0.92rem] font-semibold text-[var(--color-primary)] sm:text-[0.98rem]">
                   Past Due Pickups
                 </h2>
               </div>
-              <p className="shrink-0 text-[0.8rem] font-semibold text-[var(--color-primary)] sm:text-[0.82rem]">
+              <p className="shrink-0 text-[0.8rem] font-semibold text-[var(--color-primary)]">
                 {resolvedPickupSchedule.overduePickups.length} overdue
               </p>
             </div>
+            {/* Single unified carousel — one full-width card at every breakpoint */}
             <OverdueCarousel pickups={resolvedPickupSchedule.overduePickups} />
           </section>
 
-          {/* Stat Cards - stacked on mobile, flexed on large screens */}
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:flex lg:flex-wrap">
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {resolvedPickupSchedule.statCards.map((card) => (
               <article
                 key={card.id}
-                className="rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-4 lg:min-w-0 lg:flex-1 lg:basis-0"
+                className="min-w-0 rounded-[1rem] bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-4"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   {card.Icon && (
                     <card.Icon className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)] sm:h-4 sm:w-4" />
                   )}
-                  <p className="text-[0.74rem] text-slate-500 sm:text-[0.82rem]">{card.label}</p>
+                  <p className="text-[0.72rem] text-slate-500 sm:text-[0.82rem] leading-tight">{card.label}</p>
                 </div>
-                <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.03em] text-[var(--color-primary)] sm:mt-3 sm:text-[1.7rem]">
+                <p className="mt-2 text-[1.2rem] font-semibold tracking-[-0.03em] text-[var(--color-primary)] sm:mt-3 sm:text-[1.5rem]">
                   {card.value}
                 </p>
               </article>
@@ -623,9 +525,9 @@ const PickupSchedule = () => {
           {/* Schedule Sections */}
           <div className="space-y-6 sm:space-y-7">
             {resolvedPickupSchedule.scheduleSections.map((section) => (
-              <section key={section.id || section.title}>
+              <section key={section.id || section.title} className="min-w-0">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0 sm:gap-3">
                     <h2 className="text-[1rem] font-semibold text-slate-900 sm:text-[1.2rem]">
                       {section.title}
                     </h2>
@@ -633,7 +535,7 @@ const PickupSchedule = () => {
                       {section.fillText}
                     </span>
                   </div>
-                  <span className={`self-start rounded-full px-3 py-1 text-[0.7rem] font-semibold sm:self-auto sm:text-[0.72rem] ${section.statusClassName}`}>
+                  <span className={`self-start rounded-full px-3 py-1 text-[0.7rem] font-semibold sm:self-auto sm:text-[0.72rem] shrink-0 ${section.statusClassName}`}>
                     {section.statusText}
                   </span>
                 </div>
@@ -644,18 +546,18 @@ const PickupSchedule = () => {
                     return (
                       <article
                         key={`${section.id || section.title}-${order.id}`}
-                        className="flex flex-col gap-3 rounded-[1rem] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:gap-4 md:flex-row md:items-center md:justify-between"
+                        className="flex flex-col gap-3 rounded-[1rem] bg-white px-4 py-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:gap-4 md:flex-row md:items-center md:justify-between min-w-0"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                             <h3 className="text-[0.88rem] font-semibold text-slate-900 sm:text-[0.95rem]">
                               #{order.id}
                             </h3>
-                            <span className="text-[0.88rem] text-slate-700 sm:text-[0.95rem]">
+                            <span className="text-[0.88rem] text-slate-700 sm:text-[0.95rem] truncate">
                               {order.customer}
                             </span>
                             {contactSummary && (
-                              <span className="text-[0.72rem] text-slate-500 sm:text-[0.76rem]">
+                              <span className="text-[0.72rem] text-slate-500 sm:text-[0.76rem] break-all">
                                 {contactSummary}
                               </span>
                             )}
@@ -677,7 +579,7 @@ const PickupSchedule = () => {
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:shrink-0">
                           <div className="flex flex-wrap gap-2">
                             {customerContactActions.length > 0 ? (
                               customerContactActions.map((action, index) => (
@@ -691,7 +593,7 @@ const PickupSchedule = () => {
                                       : "bg-slate-100 text-slate-600"
                                   }`}
                                 >
-                                  <action.Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                  <action.Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                                   <span>{action.label}</span>
                                 </button>
                               ))
@@ -716,11 +618,11 @@ const PickupSchedule = () => {
           </div>
         </div>
 
-        {/* Sidebar — full width below xl, sticky fixed column on xl+ */}
-        <aside className="space-y-4 sm:space-y-5 xl:sticky xl:top-6 xl:self-start">
-          <section className="rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
+        {/* ── Sidebar ── */}
+        <aside className="min-w-0 space-y-4 sm:space-y-5 xl:sticky xl:top-6 xl:self-start">
+          <section className="min-w-0 rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-[1.05rem] font-semibold text-slate-900 sm:text-[1.2rem]">
                   Capacity Management
                 </h2>
@@ -737,15 +639,15 @@ const PickupSchedule = () => {
               <h3 className="text-[0.95rem] font-semibold text-slate-900 sm:text-[1rem]">
                 Adjust Capacity
               </h3>
-              {/* Slots: horizontal scroll on mobile, stacked on sm+ */}
-              <div className="mt-3 flex gap-3 overflow-x-auto pb-2 sm:mt-4 sm:block sm:overflow-visible sm:pb-0 sm:space-y-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {/* Slots: stacked vertically always — no horizontal overflow risk */}
+              <div className="mt-3 space-y-3 sm:mt-4">
                 {capacitySummary.slots.map((slot) => (
                   <div
                     key={slot.id}
-                    className="min-w-[180px] shrink-0 rounded-[1rem] border border-slate-100 p-3 sm:min-w-0 sm:shrink-0"
+                    className="rounded-[1rem] border border-slate-100 p-3"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <p className="text-[0.85rem] font-semibold text-slate-900 sm:text-[0.9rem]">
                           {slot.label}
                         </p>
@@ -753,7 +655,7 @@ const PickupSchedule = () => {
                           {slot.statusLabel}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="shrink-0 text-right">
                         <p className="text-[0.85rem] font-semibold text-[var(--color-primary)] sm:text-[0.92rem]">
                           {slot.filled}/{slot.capacity}
                         </p>
@@ -783,7 +685,7 @@ const PickupSchedule = () => {
                     <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-slate-500 sm:text-[0.7rem]">
                       {item.label}
                     </p>
-                    <p className="mt-1 text-[0.82rem] font-semibold text-slate-900 sm:text-[0.92rem]">
+                    <p className="mt-1 text-[0.8rem] font-semibold text-slate-900 sm:text-[0.9rem] break-words">
                       {item.value}
                     </p>
                   </div>
@@ -846,25 +748,25 @@ const PickupSchedule = () => {
             </div>
           </section>
 
-          <section className="rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
+          <section className="min-w-0 rounded-[1.2rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100 sm:p-5">
             <h2 className="text-[1.05rem] font-semibold text-slate-900 sm:text-[1.2rem]">
               Quick Actions
             </h2>
-            {/* 3-col grid on mobile, stacked column on sm+ */}
-            <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:grid-cols-1 sm:gap-3">
+            {/* Stacked column on all sizes — no grid that could overflow */}
+            <div className="mt-4 flex flex-col gap-3 sm:mt-5">
               {quickActions.map((action) => (
                 <Button
                   key={action.id}
                   variant={action.variant}
                   size="md"
-                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[0.66rem] font-medium sm:gap-2 sm:px-4 sm:text-[0.8rem] ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.8rem] font-medium ${
                     action.variant === "secondary"
                       ? "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
                       : ""
                   }`}
                 >
-                  <action.Icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                  <span className="truncate">{action.label}</span>
+                  <action.Icon className="h-4 w-4 shrink-0" />
+                  <span>{action.label}</span>
                 </Button>
               ))}
             </div>
