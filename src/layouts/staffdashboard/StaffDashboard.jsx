@@ -719,13 +719,18 @@ const StaffDashboard = () => {
                           </div>
                         )}
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="md"
-                        className="w-full rounded-xl px-3 py-2 text-[0.76rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.78rem]"
+                      <Link
+                        to={`/staff/verification/${order.id}`}
+                        className="w-full sm:w-auto"
                       >
-                        Update Status
-                      </Button>
+                        <Button
+                          variant="secondary"
+                          size="md"
+                          className="w-full rounded-xl px-3 py-2 text-[0.76rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.78rem]"
+                        >
+                          Update Status
+                        </Button>
+                      </Link>
                     </div>
                   </article>
                 ))
@@ -777,17 +782,22 @@ const StaffDashboard = () => {
                             </div>
                           </div>
 
-                          <Button
-                            variant={order.isActionActive ? "primary" : "secondary"}
-                            size="md"
-                            className={`w-full rounded-xl px-3 py-2 text-[0.76rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.78rem] md:self-auto ${
-                              order.isActionActive
-                                ? ""
-                                : "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
-                            }`}
+                          <Link
+                            to={`/staff/verification/${order.id}`}
+                            className="w-full sm:w-auto"
                           >
-                            {order.actionLabel}
-                          </Button>
+                            <Button
+                              variant={order.isActionActive ? "primary" : "secondary"}
+                              size="md"
+                              className={`w-full rounded-xl px-3 py-2 text-[0.76rem] font-semibold sm:w-auto sm:px-4 sm:text-[0.78rem] md:self-auto ${
+                                order.isActionActive
+                                  ? ""
+                                  : "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
+                              }`}
+                            >
+                              {order.actionLabel}
+                            </Button>
+                          </Link>
                         </article>
                       ))}
                     </div>
