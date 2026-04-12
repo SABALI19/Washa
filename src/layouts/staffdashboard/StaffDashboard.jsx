@@ -9,7 +9,7 @@ import laundry2Image from "../../assets/images/laundry2.jpg";
 import laundry4Image from "../../assets/images/laundry4.jpg";
 import laundry7Image from "../../assets/images/laundry7.jpg";
 import yellowTImage from "../../assets/images/Yellow-T.jpg";
-import { useDashboardLayout } from "../DashboardLayout.jsx";
+import { useDashboardLayout } from "../DashboardLayoutContext.jsx";
 import useStaffDashboard from "../../hooks/useStaffDashboard.js";
 import { apiRequest, resolveApiAssetUrl } from "../../utils/auth.js";
 import QuickActions from "./QuickActions.jsx";

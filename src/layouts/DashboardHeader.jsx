@@ -4,7 +4,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import washaLogo from "../assets/logo/washa-logo-blue.png";
 import Profile from "../components/common/Profile";
 import useAuthSession from "../hooks/useAuthSession.js";
-import { useDashboardLayout } from "./DashboardLayout.jsx";
+import { useDashboardLayout } from "./DashboardLayoutContext.jsx";
 import { getDashboardPathForRole } from "../utils/auth.js";
 
 const defaultNavigationItems = [

@@ -1,22 +1,20 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import DashboardHeader from "../layouts/DashboardHeader.jsx";
-
-const DashboardLayoutContext = createContext(null);
-
-export const useDashboardLayout = () => useContext(DashboardLayoutContext);
+import { DashboardLayoutContext } from "./DashboardLayoutContext.jsx";
 
 const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
   const location = useLocation();
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [mobileSidebarOpenPath, setMobileSidebarOpenPath] = useState(null);
   const [mobileSidebarContent, setMobileSidebarContent] = useState(null);
+  const isMobileSidebarOpen = mobileSidebarOpenPath === location.pathname;
   const closeMobileSidebar = useCallback(() => {
-    setIsMobileSidebarOpen(false);
+    setMobileSidebarOpenPath(null);
   }, []);
   const openMobileSidebar = useCallback(() => {
-    setIsMobileSidebarOpen(true);
-  }, []);
+    setMobileSidebarOpenPath(location.pathname);
+  }, [location.pathname]);
   const hasMobileSidebar = Boolean(mobileSidebarContent);
 
   const layoutValue = useMemo(
@@ -29,11 +27,6 @@ const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
     }),
     [closeMobileSidebar, hasMobileSidebar, isMobileSidebarOpen, openMobileSidebar],
   );
-
-  useEffect(() => {
-    setIsMobileSidebarOpen(false);
-    setMobileSidebarContent(null);
-  }, [location.pathname]);
 
   return (
     <DashboardLayoutContext.Provider value={layoutValue}>

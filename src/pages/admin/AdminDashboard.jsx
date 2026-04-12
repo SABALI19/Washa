@@ -8,7 +8,7 @@ import StatsCards from "../../components/common/StatsCards.jsx";
 import Card from "../../components/Card.jsx";
 import useAdminDashboard from "../../hooks/useAdminDashboard.js";
 import AdminSidebar from "../../layouts/AdminSidebar.jsx";
-import { useDashboardLayout } from "../../layouts/DashboardLayout.jsx";
+import { useDashboardLayout } from "../../layouts/DashboardLayoutContext.jsx";
 import { useLocation } from "react-router-dom";
 import {
   Clock3,
