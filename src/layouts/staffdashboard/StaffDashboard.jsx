@@ -197,26 +197,6 @@ const filterPickupSections = (sections, activeFilter) => {
     .filter((section) => section.orders.length > 0);
 };
 
-const mergePickupSections = (...sectionGroups) => {
-  const sectionMap = new Map();
-
-  sectionGroups.flat().forEach((section) => {
-    const existingSection = sectionMap.get(section.label);
-
-    if (existingSection) {
-      existingSection.orders.push(...section.orders);
-      return;
-    }
-
-    sectionMap.set(section.label, {
-      ...section,
-      orders: [...section.orders],
-    });
-  });
-
-  return Array.from(sectionMap.values());
-};
-
 const buildDashboardWithSeedData = (dashboard) => {
   const hasLiveDashboard = Boolean(dashboard?.generatedAt);
   const resolvedPendingVerificationOrders = hasLiveDashboard

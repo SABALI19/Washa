@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import Button from "../../components/Button";
 import AlertsNotification from "../../components/common/Alerts&Notification.jsx";
 import CurrentOrderStatus from "../../components/common/CurrentOrderStatus.jsx";
@@ -7,6 +8,8 @@ import StatsCards from "../../components/common/StatsCards.jsx";
 import Card from "../../components/Card.jsx";
 import useAdminDashboard from "../../hooks/useAdminDashboard.js";
 import AdminSidebar from "../../layouts/AdminSidebar.jsx";
+import { useDashboardLayout } from "../../layouts/DashboardLayout.jsx";
+import { useLocation } from "react-router-dom";
 import {
   Clock3,
   DollarSign,
@@ -45,15 +48,43 @@ const fallbackQuickActions = [
 ];
 
 const AdminDashboard = () => {
+  const location = useLocation();
+  const dashboardLayout = useDashboardLayout();
+  const closeMobileSidebar = dashboardLayout?.closeMobileSidebar;
+  const setMobileSidebarContent = dashboardLayout?.setMobileSidebarContent;
   const { dashboard, error, isLoading } = useAdminDashboard();
+  const [activeDateRange, setActiveDateRange] = useState("today");
   const stats = dashboard?.stats || [];
   const quickActions = dashboard?.quickActions || fallbackQuickActions;
+  const sidebarContent = useMemo(
+    () => (
+      <AdminSidebar
+        activeRange={activeDateRange}
+        onNavigate={closeMobileSidebar}
+        onRangeChange={setActiveDateRange}
+      />
+    ),
+    [activeDateRange, closeMobileSidebar],
+  );
+
+  useEffect(() => {
+    if (!setMobileSidebarContent) {
+      return undefined;
+    }
+
+    setMobileSidebarContent(sidebarContent);
+
+    return () => {
+      setMobileSidebarContent(null);
+      closeMobileSidebar?.();
+    };
+  }, [closeMobileSidebar, location.pathname, setMobileSidebarContent, sidebarContent]);
 
   return (
     <section className="min-h-screen bg-[var(--color-surface)]">
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
         <div className="grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)]">
-          <AdminSidebar />
+          <aside className="hidden xl:block">{sidebarContent}</aside>
 
           <div>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

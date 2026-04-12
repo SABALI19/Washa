@@ -56,7 +56,7 @@ const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
               className={`absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] transition-opacity ${
                 isMobileSidebarOpen ? "opacity-100" : "opacity-0"
               }`}
-              aria-label="Close staff sidebar"
+              aria-label="Close dashboard sidebar"
             />
             <aside
               className={`absolute right-0 top-0 h-full w-[min(88vw,320px)] overflow-y-auto bg-[var(--color-surface)] p-4 shadow-[-16px_0_40px_rgba(15,23,42,0.16)] transition-transform ${
