@@ -137,16 +137,6 @@ const DashboardHeader = ({
                 )}
               </button>
             )}
-            {dashboardLayout?.hasMobileSidebar && (
-              <button
-                type="button"
-                onClick={dashboardLayout.openMobileSidebar}
-                className="hidden h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] md:inline-flex xl:hidden"
-                aria-label="Open dashboard sidebar"
-              >
-                <PanelRightOpen className="h-4 w-4" />
-              </button>
-            )}
             <Profile user={resolvedUser} size="md" />
           </div>
         </div>

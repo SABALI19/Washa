@@ -36,7 +36,7 @@ const AdminSidebar = ({
   const location = useLocation();
 
   return (
-    <div className={`w-full space-y-4 ${className}`}>
+    <aside className={`w-full space-y-4 ${className}`}>
       <div>
         <h2 className="text-[0.82rem] font-semibold text-slate-900">
           Navigation
@@ -114,7 +114,7 @@ const AdminSidebar = ({
       </Card>
 
       <BussinessInformation />
-    </div>
+    </aside>
   );
 };
 

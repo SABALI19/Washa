@@ -15,7 +15,6 @@ import {
   DollarSign,
   Download,
   Package,
-  PanelRightOpen,
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
@@ -99,16 +98,6 @@ const AdminDashboard = () => {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="md"
-                  onClick={dashboardLayout?.openMobileSidebar}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.75rem] font-medium xl:hidden"
-                >
-                  <PanelRightOpen className="h-3.5 w-3.5" />
-                  <span>Sidebar</span>
-                </Button>
                 <Button
                   variant="secondary"
                   size="md"
