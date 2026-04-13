@@ -38,7 +38,7 @@ const AdminSidebar = ({
   return (
     <aside className={`w-full space-y-4 ${className}`}>
       <div>
-        <h2 className="text-[0.82rem] font-semibold text-slate-900">
+        <h2 className="text-[1.10rem] font-inter font-semibold text-slate-900">
           Navigation
         </h2>
 
@@ -59,8 +59,8 @@ const AdminSidebar = ({
                   className={`${itemClassName} cursor-not-allowed opacity-60`}
                   disabled
                 >
-                  <item.Icon className="h-3.5 w-3.5" />
-                  <span className="text-[0.76rem] font-medium">{item.label}</span>
+                  <item.Icon className="h-4 w-4" />
+                  <span className="text-[1rem] font-roboto font-medium">{item.label}</span>
                 </button>
               );
             }
@@ -72,8 +72,8 @@ const AdminSidebar = ({
                 onClick={onNavigate}
                 className={itemClassName}
               >
-                <item.Icon className="h-3.5 w-3.5" />
-                <span className="text-[0.76rem] font-medium">{item.label}</span>
+                <item.Icon className="h-4 w-4" />
+                <span className="text-[0.96rem]  font-roboto font-medium">{item.label}</span>
               </Link>
             );
           })}

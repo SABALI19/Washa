@@ -174,10 +174,10 @@ const AdminDashboard = () => {
           <div>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <h1 className="text-[1.45rem] font-semibold tracking-[-0.03em] text-slate-900">
+                <h1 className="text-[1.45rem] font-semibold tracking-[-0.03em] text-[#2c4a7d]">
                   Admin Dashboard
                 </h1>
-                <p className="mt-1.5 text-[0.72rem] text-slate-500">
+                <p className="mt-1.5 text-[0.72rem] text-gray-500">
                   {formatGeneratedAt(dashboard?.generatedAt)}
                 </p>
               </div>
