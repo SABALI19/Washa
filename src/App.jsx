@@ -21,7 +21,6 @@ import adminUserImage from "./assets/images/download (2).jpg";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   Search,
   Settings,
 } from "lucide-react";
@@ -83,25 +82,6 @@ function App() {
         />
         <Search className="h-5 w-5 text-slate-400" />
       </label>
-    </div>
-  );
-
-  const adminAnalyticsUtility = (
-    <div className="flex items-center gap-3 text-[0.75rem]">
-      <span className="text-slate-500">Date Range:</span>
-      <button
-        type="button"
-        className="rounded-xl border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700"
-      >
-        Last 7 days
-      </button>
-      <button
-        type="button"
-        className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-primary)] bg-white px-4 py-2 font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary-soft)]"
-      >
-        <Download className="h-3.5 w-3.5" />
-        <span>Export</span>
-      </button>
     </div>
   );
 
@@ -182,7 +162,6 @@ function App() {
                       { name: "Analytics", href: "/admin/analytics" },
                       { name: "Disputes", href: "/admin/disputes" },
                     ],
-                    headerUtilityContent: adminAnalyticsUtility,
                     user: {
                       profileImage: adminUserImage,
                     },
