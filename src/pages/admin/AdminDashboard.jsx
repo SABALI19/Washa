@@ -6,6 +6,7 @@ import OrdervolumeTrend from "../../components/common/OrdervolumeTrend.jsx";
 import RecentActivity from "../../components/common/RecentActivity.jsx";
 import StatsCards from "../../components/common/StatsCards.jsx";
 import Card from "../../components/Card.jsx";
+import FabButton from "../../components/common/FabButton.jsx";
 import useAdminDashboard from "../../hooks/useAdminDashboard.js";
 import AdminSidebar from "../../layouts/AdminSidebar.jsx";
 import { useDashboardLayout } from "../../layouts/DashboardLayoutContext.jsx";
@@ -15,6 +16,7 @@ import {
   DollarSign,
   Download,
   Package,
+  PanelRightOpen,
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
@@ -82,6 +84,15 @@ const AdminDashboard = () => {
 
   return (
     <section className="min-h-screen bg-[var(--color-surface)]">
+      <FabButton
+        Icon={PanelRightOpen}
+        ariaLabel="Open admin sidebar"
+        onClick={dashboardLayout?.openMobileSidebar}
+        shapeClassName="rounded-xl"
+        visibilityClassName="md:hidden"
+        className="bottom-6 top-auto xl:hidden"
+      />
+
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
         <div className="grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)]">
           <aside className="hidden xl:block">{sidebarContent}</aside>

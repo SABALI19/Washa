@@ -157,6 +157,7 @@ function App() {
                         <Settings className="h-5 w-5" />
                       </button>
                     ),
+                    showMobileSidebarButton: false,
                     user: {
                       profileImage: adminUserImage,
                     },

@@ -28,6 +28,7 @@ const DashboardHeader = ({
   headerActionHasChevron = true,
   headerInlineContent,
   headerUtilityContent,
+  showMobileSidebarButton = true,
   showNotificationBell = false,
   notificationCount = 0,
 }) => {
@@ -179,7 +180,7 @@ const DashboardHeader = ({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {headerInlineContent && <div>{headerInlineContent}</div>}
-                {dashboardLayout?.hasMobileSidebar && (
+                {showMobileSidebarButton && dashboardLayout?.hasMobileSidebar && (
                   <button
                     type="button"
                     onClick={dashboardLayout.openMobileSidebar}
