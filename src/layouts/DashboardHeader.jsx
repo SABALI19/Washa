@@ -28,6 +28,7 @@ const DashboardHeader = ({
   headerActionHasChevron = true,
   headerInlineContent,
   headerUtilityContent,
+  showMobileHeaderUtility = true,
   showMobileSidebarButton = true,
   showNotificationBell = false,
   notificationCount = 0,
@@ -192,7 +193,9 @@ const DashboardHeader = ({
                 )}
               </div>
             </div>
-            {headerUtilityContent && <div className="mt-3">{headerUtilityContent}</div>}
+            {showMobileHeaderUtility && headerUtilityContent && (
+              <div className="mt-3">{headerUtilityContent}</div>
+            )}
             {headerActionLabel && (
               <div className="mt-3 flex items-center gap-3">
                 {headerActionLabel && (
