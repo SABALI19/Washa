@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "../../components/Button";
 import AlertsNotification from "../../components/common/Alerts&Notification.jsx";
 import CurrentOrderStatus from "../../components/common/CurrentOrderStatus.jsx";
@@ -18,14 +18,61 @@ import {
   Package,
   PanelRightOpen,
   RefreshCw,
-  ShieldCheck,
+  Star,
 } from "lucide-react";
 
 const statIconMap = {
   "active-orders": Clock3,
-  "fulfillment-rate": ShieldCheck,
+  "customer-satisfaction": Star,
+  "fulfillment-rate": Star,
   "orders-today": Package,
   "revenue-today": DollarSign,
+};
+
+const fallbackReviewCount = 32;
+
+const parseCountValue = (value) => {
+  const numericValue = Number(value);
+
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
+
+const getReviewCount = (dashboard, stat) => {
+  const reviewCountCandidates = [
+    stat?.reviewCount,
+    stat?.reviewsCount,
+    stat?.reviews?.length,
+    dashboard?.customerSatisfaction?.reviewCount,
+    dashboard?.customerSatisfaction?.reviewsCount,
+    dashboard?.reviewsCount,
+    dashboard?.reviewCount,
+    dashboard?.reviews?.length,
+  ];
+
+  for (const candidate of reviewCountCandidates) {
+    const parsedCount = parseCountValue(candidate);
+
+    if (parsedCount !== null) {
+      return parsedCount;
+    }
+  }
+
+  return fallbackReviewCount;
+};
+
+const normalizeAdminStat = (stat, dashboard) => {
+  if (!["fulfillment-rate", "customer-satisfaction"].includes(stat.id)) {
+    return stat;
+  }
+
+  const reviewCount = getReviewCount(dashboard, stat);
+
+  return {
+    ...stat,
+    id: "customer-satisfaction",
+    subtitle: `${reviewCount} reviews`,
+    title: "Customer Satisfaction",
+  };
 };
 
 const formatGeneratedAt = (value) => {
@@ -49,14 +96,23 @@ const fallbackQuickActions = [
   "Staff Schedule",
 ];
 
+const buildExportFileName = () => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  return `washa-admin-dashboard-${timestamp}.json`;
+};
+
 const AdminDashboard = () => {
   const location = useLocation();
   const dashboardLayout = useDashboardLayout();
   const closeMobileSidebar = dashboardLayout?.closeMobileSidebar;
   const setMobileSidebarContent = dashboardLayout?.setMobileSidebarContent;
-  const { dashboard, error, isLoading } = useAdminDashboard();
+  const { dashboard, error, isLoading, refreshDashboard } = useAdminDashboard();
   const [activeDateRange, setActiveDateRange] = useState("today");
-  const stats = dashboard?.stats || [];
+  const stats = useMemo(
+    () => (dashboard?.stats || []).map((stat) => normalizeAdminStat(stat, dashboard)),
+    [dashboard],
+  );
   const quickActions = dashboard?.quickActions || fallbackQuickActions;
   const sidebarContent = useMemo(
     () => (
@@ -81,6 +137,25 @@ const AdminDashboard = () => {
       closeMobileSidebar?.();
     };
   }, [closeMobileSidebar, location.pathname, setMobileSidebarContent, sidebarContent]);
+
+  const handleExportData = useCallback(() => {
+    const exportPayload = {
+      activeDateRange,
+      dashboard: dashboard || {},
+      exportedAt: new Date().toISOString(),
+      stats,
+    };
+    const exportBlob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+      type: "application/json",
+    });
+    const exportUrl = URL.createObjectURL(exportBlob);
+    const exportLink = document.createElement("a");
+
+    exportLink.href = exportUrl;
+    exportLink.download = buildExportFileName();
+    exportLink.click();
+    URL.revokeObjectURL(exportUrl);
+  }, [activeDateRange, dashboard, stats]);
 
   return (
     <section className="min-h-screen bg-[var(--color-surface)]">
@@ -108,20 +183,26 @@ const AdminDashboard = () => {
 
               <div className="flex flex-wrap gap-3">
                 <Button
+                  type="button"
                   variant="secondary"
                   size="md"
+                  onClick={handleExportData}
+                  disabled={!dashboard}
                   className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.75rem] font-medium"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Export Data</span>
                 </Button>
                 <Button
+                  type="button"
                   variant="primary"
                   size="md"
+                  onClick={() => refreshDashboard()}
+                  disabled={isLoading}
                   className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.75rem] font-medium"
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Refresh</span>
+                  <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                  <span>{isLoading ? "Refreshing..." : "Refresh"}</span>
                 </Button>
               </div>
             </div>
@@ -138,7 +219,7 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            <div className="mt-4 grid gap-3 lg:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {stats.map((stat) => (
                 <StatsCards
                   key={stat.id}

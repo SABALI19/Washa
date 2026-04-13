@@ -42,7 +42,7 @@ const OrdervolumeTrend = ({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-[1.15rem] font-semibold text-slate-900">{title}</h2>
         <div className="rounded-xl bg-slate-100 px-4 py-2 text-[0.78rem] font-medium text-slate-600">
-          Live backend data
+          Live data
         </div>
       </div>
 

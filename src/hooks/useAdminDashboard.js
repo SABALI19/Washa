@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { apiRequest } from "../utils/auth.js";
 
@@ -7,42 +7,42 @@ const useAdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const loadDashboard = useCallback(async ({ shouldUpdate = () => true } = {}) => {
+    try {
+      setIsLoading(true);
+      const data = await apiRequest("/admin/dashboard");
+
+      if (!shouldUpdate()) {
+        return;
+      }
+
+      setDashboard(data.dashboard || null);
+      setError("");
+    } catch (requestError) {
+      if (!shouldUpdate()) {
+        return;
+      }
+
+      setDashboard(null);
+      setError(requestError.message || "Unable to load the admin dashboard.");
+    } finally {
+      if (shouldUpdate()) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
-    const loadDashboard = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiRequest("/admin/dashboard");
-
-        if (!isMounted) {
-          return;
-        }
-
-        setDashboard(data.dashboard || null);
-        setError("");
-      } catch (requestError) {
-        if (!isMounted) {
-          return;
-        }
-
-        setDashboard(null);
-        setError(requestError.message || "Unable to load the admin dashboard.");
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadDashboard();
+    loadDashboard({ shouldUpdate: () => isMounted });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadDashboard]);
 
-  return { dashboard, error, isLoading };
+  return { dashboard, error, isLoading, refreshDashboard: loadDashboard };
 };
 
 export default useAdminDashboard;
