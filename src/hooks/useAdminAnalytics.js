@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 
 import { apiRequest } from "../utils/auth.js";
 
+const formatAnalyticsErrorMessage = (message) => {
+  if (message === "buildProcessingStageRows is not defined") {
+    return "Build processing stage unavailable until first order.";
+  }
+
+  return message || "Unable to load admin analytics.";
+};
+
 const useAdminAnalytics = ({ range = "week" } = {}) => {
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +35,7 @@ const useAdminAnalytics = ({ range = "week" } = {}) => {
         }
 
         setAnalytics(null);
-        setError(requestError.message || "Unable to load admin analytics.");
+        setError(formatAnalyticsErrorMessage(requestError.message));
       } finally {
         if (shouldUpdate()) {
           setIsLoading(false);
