@@ -182,17 +182,17 @@ const AdminDashboard = () => {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
                 <Button
                   type="button"
                   variant="secondary"
                   size="md"
                   onClick={handleExportData}
                   disabled={!dashboard}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.75rem] font-medium"
+                  className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.68rem] font-medium sm:px-4 sm:text-[0.75rem]"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Export Data</span>
+                  <Download className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Export Data</span>
                 </Button>
                 <Button
                   type="button"
@@ -200,10 +200,10 @@ const AdminDashboard = () => {
                   size="md"
                   onClick={() => refreshDashboard()}
                   disabled={isLoading}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.75rem] font-medium"
+                  className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.68rem] font-medium sm:px-4 sm:text-[0.75rem]"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                  <span>{isLoading ? "Refreshing..." : "Refresh"}</span>
+                  <RefreshCw className={`h-3.5 w-3.5 shrink-0 ${isLoading ? "animate-spin" : ""}`} />
+                  <span className="truncate">{isLoading ? "Refreshing..." : "Refresh"}</span>
                 </Button>
               </div>
             </div>
