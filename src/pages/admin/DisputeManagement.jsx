@@ -7,7 +7,7 @@ import {
   Download,
   TrendingDown,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const fallbackStatusFilters = ["All", "Open", "In Review", "Resolved", "Closed"];
 const fallbackDisputes = [
@@ -47,6 +47,12 @@ const typeClassNameMap = {
 
 const colorPalette = ["#157f85", "#1f9fa6", "#8dad8f", "#6e8aa1", "#cbd5e1"];
 
+const buildDisputesExportFileName = () => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  return `washa-disputes-${timestamp}.json`;
+};
+
 const DisputeManagement = () => {
   const { disputesDashboard, error, isLoading } = useAdminDisputes();
   const [activeStatus, setActiveStatus] = useState("All");
@@ -69,6 +75,29 @@ const DisputeManagement = () => {
   }, [activeStatus, disputes, searchQuery]);
   const commonReasons = disputesDashboard?.summary?.commonReasons || [];
   const resolutionRates = disputesDashboard?.summary?.resolutionRates || [];
+  const handleExportDisputes = useCallback(() => {
+    const exportPayload = {
+      activeStatus,
+      disputes: filteredDisputes,
+      exportedAt: new Date().toISOString(),
+      searchQuery,
+      summary: disputesDashboard?.summary || {},
+      totalExported: filteredDisputes.length,
+    };
+    const exportBlob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+      type: "application/json",
+    });
+    const exportUrl = URL.createObjectURL(exportBlob);
+    const exportLink = document.createElement("a");
+
+    exportLink.href = exportUrl;
+    exportLink.download = buildDisputesExportFileName();
+    exportLink.style.display = "none";
+    document.body.appendChild(exportLink);
+    exportLink.click();
+    exportLink.remove();
+    window.setTimeout(() => URL.revokeObjectURL(exportUrl), 0);
+  }, [activeStatus, disputesDashboard?.summary, filteredDisputes, searchQuery]);
 
   return (
     <section className="min-h-screen bg-[var(--color-surface)]">
@@ -86,6 +115,7 @@ const DisputeManagement = () => {
           <Button
             variant="secondary"
             size="md"
+            onClick={handleExportDisputes}
             className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[0.75rem] font-medium"
           >
             <Download className="h-3.5 w-3.5" />

@@ -8,6 +8,7 @@ const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
   const location = useLocation();
   const [mobileSidebarOpenPath, setMobileSidebarOpenPath] = useState(null);
   const [mobileSidebarContent, setMobileSidebarContent] = useState(null);
+  const [headerUtilityContent, setHeaderUtilityContent] = useState(null);
   const isMobileSidebarOpen = mobileSidebarOpenPath === location.pathname;
   const closeMobileSidebar = useCallback(() => {
     setMobileSidebarOpenPath(null);
@@ -23,15 +24,24 @@ const DashboardLayout = ({ headerVariant = "default", headerProps = {} }) => {
       hasMobileSidebar,
       isMobileSidebarOpen,
       openMobileSidebar,
+      setHeaderUtilityContent,
       setMobileSidebarContent,
     }),
     [closeMobileSidebar, hasMobileSidebar, isMobileSidebarOpen, openMobileSidebar],
+  );
+  const resolvedHeaderProps = useMemo(
+    () => ({
+      ...headerProps,
+      headerUtilityContent:
+        headerUtilityContent || headerProps.headerUtilityContent,
+    }),
+    [headerProps, headerUtilityContent],
   );
 
   return (
     <DashboardLayoutContext.Provider value={layoutValue}>
       <div className="min-h-screen">
-        <DashboardHeader variant={headerVariant} {...headerProps} />
+        <DashboardHeader variant={headerVariant} {...resolvedHeaderProps} />
         <main className="mx-auto w-full min-w-0 overflow-x-hidden px-4 py-6 sm:px-6 lg:p-8">
           <Outlet />
         </main>
