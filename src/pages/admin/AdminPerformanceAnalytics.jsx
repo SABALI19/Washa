@@ -189,40 +189,44 @@ const AdminPerformanceAnalytics = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            {rangeTabs.map((tab) => (
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <div className="grid grid-cols-5 gap-1 sm:flex sm:flex-wrap sm:gap-2">
+              {rangeTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveRange(tab.key)}
+                  aria-pressed={activeRange === tab.key}
+                  disabled={isLoading && activeRange === tab.key}
+                  className={`min-w-0 rounded-lg px-1.5 py-2 text-center text-[0.62rem] font-medium transition-colors sm:px-4 sm:text-[0.68rem] ${
+                    activeRange === tab.key
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  }`}
+                >
+                  <span className="block truncate">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <button
-                key={tab.key}
                 type="button"
-                onClick={() => setActiveRange(tab.key)}
-                aria-pressed={activeRange === tab.key}
-                disabled={isLoading && activeRange === tab.key}
-                className={`rounded-lg px-3 py-2 text-[0.68rem] font-medium transition-colors sm:px-4 ${
-                  activeRange === tab.key
-                    ? "bg-[var(--color-primary)] text-white"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-                }`}
+                className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2 text-[0.68rem] font-medium text-slate-700 transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] sm:px-4"
               >
-                {tab.label}
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Custom Range</span>
               </button>
-            ))}
 
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[0.68rem] font-medium text-slate-700 transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] sm:px-4"
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              <span>Custom Range</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDownloadReport}
-              className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-[0.68rem] font-medium text-white transition-colors hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Download Report</span>
-            </button>
+              <button
+                type="button"
+                onClick={handleDownloadReport}
+                className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-2 py-2 text-[0.68rem] font-medium text-white transition-colors hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 sm:px-4"
+              >
+                <Download className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Download Report</span>
+              </button>
+            </div>
           </div>
         </div>
 
