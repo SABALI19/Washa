@@ -69,6 +69,7 @@ const normalizeAdminStat = (stat, dashboard) => {
 
   return {
     ...stat,
+    change: undefined,
     id: "customer-satisfaction",
     subtitle: `${reviewCount} reviews`,
     title: "Customer Satisfaction",
