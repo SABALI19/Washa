@@ -89,8 +89,6 @@ const AdminDashboard = () => {
         ariaLabel="Open admin sidebar"
         onClick={dashboardLayout?.openMobileSidebar}
         shapeClassName="rounded-xl"
-        visibilityClassName="md:hidden"
-        className="bottom-6 top-auto xl:hidden"
       />
 
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
