@@ -164,7 +164,7 @@ const DashboardHeader = ({
         ) : (
           <div className="py-2 md:hidden">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex min-w-0 flex-1 space-x-2 overflow-x-auto">
+              <div className="scrollbar-hide flex min-w-0 flex-1 space-x-2 overflow-x-auto">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.name}
