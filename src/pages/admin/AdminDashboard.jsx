@@ -108,8 +108,10 @@ const AdminDashboard = () => {
   const dashboardLayout = useDashboardLayout();
   const closeMobileSidebar = dashboardLayout?.closeMobileSidebar;
   const setMobileSidebarContent = dashboardLayout?.setMobileSidebarContent;
-  const { dashboard, error, isLoading, refreshDashboard } = useAdminDashboard();
   const [activeDateRange, setActiveDateRange] = useState("today");
+  const { dashboard, error, isLoading, refreshDashboard } = useAdminDashboard({
+    range: activeDateRange,
+  });
   const stats = useMemo(
     () => (dashboard?.stats || []).map((stat) => normalizeAdminStat(stat, dashboard)),
     [dashboard],
@@ -174,11 +176,11 @@ const AdminDashboard = () => {
           <div>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <h1 className="text-[1.45rem] font-semibold tracking-[-0.03em] text-[#2c4a7d]">
+                <h1 className="text-[1.25rem] font-inter font-semibold tracking-normal text-[#2c4a7d] sm:text-[1.45rem] lg:text-[1.65rem] xl:text-[1.95rem]">
                   Admin Dashboard
                 </h1>
                 <p className="mt-1.5 text-[0.72rem] text-gray-500">
-                  {formatGeneratedAt(dashboard?.generatedAt)}
+                  {dashboard?.dateRangeLabel || formatGeneratedAt(dashboard?.generatedAt)}
                 </p>
               </div>
 
@@ -234,7 +236,7 @@ const AdminDashboard = () => {
               <OrdervolumeTrend
                 dataPoints={dashboard?.orderVolumeTrend?.dataPoints}
                 labels={dashboard?.orderVolumeTrend?.labels}
-                title="Today’s Intake Trend"
+                title={activeDateRange === "today" ? "Today's Intake Trend" : "Intake Trend"}
               />
               <CurrentOrderStatus items={dashboard?.currentOrderStatus?.items} />
             </div>
