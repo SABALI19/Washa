@@ -16,7 +16,7 @@ const navigationItems = [
   { label: "Disputes", href: "/admin/disputes", Icon: OctagonAlert },
   { label: "Performance Analytics", href: "/admin/analytics", Icon: BarChart3 },
   { label: "Staff Management", href: "/admin/staff", Icon: UsersRound },
-  { label: "System Settings", Icon: Settings },
+  { label: "System Settings", href: "/admin/settings", Icon: Settings },
 ];
 
 const ranges = [
@@ -37,7 +37,7 @@ const AdminSidebar = ({
   const location = useLocation();
 
   return (
-    <aside className={`w-full space-y-4 ${className}`}>
+    <aside className={`w-full space-y-4 rounded-2xl ${className}`}>
       <div>
         <h2 className="text-[1.25rem] font-inter font-semibold text-[#2c4a7d]">
           Navigation

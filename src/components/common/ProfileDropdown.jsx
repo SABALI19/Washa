@@ -1,9 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiEdit2, FiImage, FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
 import { logoutAuthSession } from '../../utils/auth.js';
 
-const ProfileDropdown = ({ user, isOpen, onClose }) => {
+const ProfileDropdown = ({ user, isOpen, onClose, onViewProfileImage }) => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -46,6 +46,25 @@ const ProfileDropdown = ({ user, isOpen, onClose }) => {
 
       {/* Menu Items */}
       <div className="py-1">
+        <button
+          type="button"
+          onClick={() => {
+            onViewProfileImage?.();
+            onClose();
+          }}
+          className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm whitespace-nowrap text-gray-700 transition-colors hover:bg-gray-50"
+        >
+          <FiImage className="w-4 h-4 text-gray-400" />
+          View Profile Image
+        </button>
+        <Link
+          to="/settings"
+          onClick={onClose}
+          className="flex items-center gap-3 px-4 py-2 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <FiEdit2 className="w-4 h-4 text-gray-400" />
+          Edit Profile Image
+        </Link>
         <Link
           to="/profile"
           onClick={onClose}

@@ -41,8 +41,9 @@ const DashboardHeader = ({
   const resolvedUser =
     storedSession?.user || user
       ? {
-          ...(storedSession?.user || {}),
           ...(user || {}),
+          ...(storedSession?.user || {}),
+          profileImage: storedSession?.user?.profileImage || user?.profileImage,
         }
       : undefined;
   const brandLink = getDashboardPathForRole(resolvedUser?.role);

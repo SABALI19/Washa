@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import LandingPage from "./pages/LandingPage.jsx";
 import CustomerDashboard from "./pages/CustomerDashboard.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -8,6 +8,7 @@ import Login from "./components/auth/Login.jsx";
 import PublicOnlyRoute from "./components/auth/PublicOnlyRoute.jsx";
 import RequireAuth from "./components/auth/RequireAuth.jsx";
 import Signup from "./components/auth/Signup.jsx";
+import SystemSettings from "./pages/SystemSettings.jsx";
 import PickupSchedule from "./pages/PickupSchedule.jsx";
 import { pickupScheduleTotalScheduled } from "./pages/pickupScheduleData.js";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
@@ -133,12 +134,12 @@ function App() {
                     brandLabel: "LaundryTrack",
                     navigationItems: adminNavigationItems,
                     headerUtilityContent: (
-                      <button
-                        type="button"
+                      <Link
+                        to="/admin/settings"
                         className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)]"
                       >
                         <Settings className="h-5 w-5" />
-                      </button>
+                      </Link>
                     ),
                     showMobileHeaderUtility: false,
                     showMobileSidebarButton: false,
@@ -169,6 +170,21 @@ function App() {
             >
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
               <Route path="/admin/staff" element={<AdminStaffManagement />} />
+              <Route path="/admin/settings" element={<SystemSettings />} />
+            </Route>
+          </Route>
+          <Route element={<RequireAuth allowedRoles={["customer", "staff", "admin"]} />}>
+            <Route
+              element={
+                <DashboardLayout
+                  headerProps={{
+                    brandLabel: "LaundryTrack",
+                  }}
+                />
+              }
+            >
+              <Route path="/settings" element={<SystemSettings />} />
+              <Route path="/profile" element={<Navigate to="/settings" replace />} />
             </Route>
           </Route>
           <Route element={<RequireAuth allowedRoles={["admin"]} />}>

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FiUser, FiChevronDown } from 'react-icons/fi';
 import ProfileDropdown from './ProfileDropdown';
 
 const Profile = ({ user, size = 'md', className = '' }) => {
   const [imageError, setImageError] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
 
   const sizes = {
     sm: { container: 'w-6 h-6',                   icon: 'w-3 h-3',                border: 'border'   },
@@ -16,6 +17,10 @@ const Profile = ({ user, size = 'md', className = '' }) => {
   const sizeConfig = sizes[size] || sizes.md;
   const containerClass = `${sizeConfig.container} rounded-full ${sizeConfig.border} border-gray-300 dark:border-gray-600 shadow-sm`;
   const showImage = user?.profileImage && !imageError;
+
+  useEffect(() => {
+    setImageError(false);
+  }, [user?.profileImage]);
 
   return (
     <div className={`relative flex items-center gap-1 ${className}`}>
@@ -61,7 +66,45 @@ const Profile = ({ user, size = 'md', className = '' }) => {
         user={user}
         isOpen={isDropdownOpen}
         onClose={() => setIsDropdownOpen(false)}
+        onViewProfileImage={() => setIsImagePreviewOpen(true)}
       />
+
+      {isImagePreviewOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 px-4">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            aria-label="Close profile image preview"
+            onClick={() => setIsImagePreviewOpen(false)}
+          />
+          <div className="relative w-full max-w-sm rounded-lg bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-slate-900">Profile Image</h2>
+              <button
+                type="button"
+                onClick={() => setIsImagePreviewOpen(false)}
+                className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              {showImage ? (
+                <img
+                  src={user.profileImage}
+                  alt={user?.name || 'Profile'}
+                  className="h-56 w-56 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="flex h-56 w-56 items-center justify-center rounded-lg bg-[#2c4a7d]">
+                  <FiUser className="h-20 w-20 text-white" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
