@@ -121,11 +121,12 @@ const AdminDashboard = () => {
     () => (
       <AdminSidebar
         activeRange={activeDateRange}
+        businessInformation={dashboard?.businessInformation}
         onNavigate={closeMobileSidebar}
         onRangeChange={setActiveDateRange}
       />
     ),
-    [activeDateRange, closeMobileSidebar],
+    [activeDateRange, closeMobileSidebar, dashboard?.businessInformation],
   );
 
   useEffect(() => {

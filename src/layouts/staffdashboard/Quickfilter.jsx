@@ -1,7 +1,7 @@
 const Quickfilter = ({ activeFilter = "all", filters = [], onFilterChange }) => {
   return (
     <section className="rounded-[1.4rem] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-      <h2 className="text-[0.95rem] font-semibold text-slate-900">
+      <h2 className="text-[1.25rem] font-inter font-semibold text-[#2c4a7d]">
         Quick Filters
       </h2>
 

@@ -181,9 +181,9 @@ const AdminPerformanceAnalytics = () => {
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <h1 className="text-[0.95rem] font-semibold tracking-normal text-slate-900 sm:text-[1rem]">
-              Performance Analytics
-            </h1>
+            <h1 className="text-[1.25rem] font-inter font-semibold tracking-normal text-[#2c4a7d] sm:text-[1.45rem] lg:text-[1.65rem] xl:text-[1.95rem]">
+  Performance Analytics
+</h1>
             <p className="mt-1.5 text-[0.72rem] text-slate-500">
               {analytics?.dateRangeLabel || `${activeRangeLabel} live range`}
             </p>

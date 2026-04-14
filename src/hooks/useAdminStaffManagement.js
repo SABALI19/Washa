@@ -2,51 +2,55 @@ import { useCallback, useEffect, useState } from "react";
 
 import { apiRequest } from "../utils/auth.js";
 
-const useAdminDashboard = ({ range = "today" } = {}) => {
-  const [dashboard, setDashboard] = useState(null);
+const useAdminStaffManagement = () => {
+  const [staffManagement, setStaffManagement] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboard = useCallback(
+  const loadStaffManagement = useCallback(
     async ({ shouldUpdate = () => true } = {}) => {
       try {
         setIsLoading(true);
-        const query = new URLSearchParams({ range }).toString();
-        const data = await apiRequest(`/admin/dashboard?${query}`);
+        const data = await apiRequest("/admin/staff");
 
         if (!shouldUpdate()) {
           return;
         }
 
-        setDashboard(data.dashboard || null);
+        setStaffManagement(data.staffManagement || null);
         setError("");
       } catch (requestError) {
         if (!shouldUpdate()) {
           return;
         }
 
-        setDashboard(null);
-        setError(requestError.message || "Unable to load the admin dashboard.");
+        setStaffManagement(null);
+        setError(requestError.message || "Unable to load staff management.");
       } finally {
         if (shouldUpdate()) {
           setIsLoading(false);
         }
       }
     },
-    [range],
+    [],
   );
 
   useEffect(() => {
     let isMounted = true;
 
-    loadDashboard({ shouldUpdate: () => isMounted });
+    loadStaffManagement({ shouldUpdate: () => isMounted });
 
     return () => {
       isMounted = false;
     };
-  }, [loadDashboard]);
+  }, [loadStaffManagement]);
 
-  return { dashboard, error, isLoading, refreshDashboard: loadDashboard };
+  return {
+    error,
+    isLoading,
+    refreshStaffManagement: loadStaffManagement,
+    staffManagement,
+  };
 };
 
-export default useAdminDashboard;
+export default useAdminStaffManagement;

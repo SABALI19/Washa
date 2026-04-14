@@ -104,7 +104,7 @@ const DisputeManagement = () => {
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-4">
-            <h1 className="text-[1.45rem] font-semibold tracking-[-0.03em] text-slate-900">
+            <h1 className="text-[1.25rem] font-inter font-semibold tracking-normal text-[#2c4a7d] sm:text-[1.45rem] lg:text-[1.65rem] xl:text-[1.95rem]">
               Dispute Management
             </h1>
             <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[0.72rem] font-semibold text-[var(--color-primary)]">

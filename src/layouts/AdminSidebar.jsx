@@ -15,7 +15,7 @@ const navigationItems = [
   { label: "All Orders", href: "/admin/orders", Icon: Package },
   { label: "Disputes", href: "/admin/disputes", Icon: OctagonAlert },
   { label: "Performance Analytics", href: "/admin/analytics", Icon: BarChart3 },
-  { label: "Staff Management", Icon: UsersRound },
+  { label: "Staff Management", href: "/admin/staff", Icon: UsersRound },
   { label: "System Settings", Icon: Settings },
 ];
 
@@ -29,6 +29,7 @@ const ranges = [
 
 const AdminSidebar = ({
   activeRange = "today",
+  businessInformation,
   className = "",
   onNavigate,
   onRangeChange,
@@ -38,8 +39,9 @@ const AdminSidebar = ({
   return (
     <aside className={`w-full space-y-4 ${className}`}>
       <div>
-        <h2 className="text-[1.10rem] font-inter font-semibold text-slate-900">
+        <h2 className="text-[1.25rem] font-inter font-semibold text-[#2c4a7d]">
           Navigation
+          
         </h2>
 
         <div className="mt-3 space-y-1">
@@ -81,7 +83,7 @@ const AdminSidebar = ({
       </div>
 
       <Card className="rounded-[1.1rem] border-slate-100 p-4 shadow-[0_6px_18px_rgba(15,23,42,0.06)]">
-        <h2 className="text-[0.82rem] font-semibold text-slate-900">
+        <h2 className="text-[1.25rem] font-inter font-semibold text-[#2c4a7d]">
           Date Range
         </h2>
 
@@ -113,7 +115,7 @@ const AdminSidebar = ({
         </div>
       </Card>
 
-      <BussinessInformation />
+      <BussinessInformation businessInformation={businessInformation} />
     </aside>
   );
 };

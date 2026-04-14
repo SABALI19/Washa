@@ -13,6 +13,7 @@ import { pickupScheduleTotalScheduled } from "./pages/pickupScheduleData.js";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminAnalytics from "./pages/admin/AdminPerformanceAnalytics.jsx";
 import DisputeManagement from "./pages/admin/DisputeManagement.jsx";
+import AdminStaffManagement from "./pages/admin/AdminStaffManagement.jsx";
 import OrderTracking from "./components/OrderTracking.jsx";
 import OrderHistory from "./pages/OrderHistory.jsx";
 import StaffDashboard from "./layouts/staffdashboard/StaffDashboard.jsx";
@@ -29,6 +30,13 @@ function App() {
   const staffNavigationItems = [
     { name: "Staff Dashboard", href: "/staff/dashboard" },
     { name: "Pickups", href: "/staff/pickups" },
+  ];
+  const adminNavigationItems = [
+    { name: "Admin Dashboard", href: "/admin/dashboard" },
+    { name: "Orders", href: "/admin/orders" },
+    { name: "Analytics", href: "/admin/analytics" },
+    { name: "Disputes", href: "/admin/disputes" },
+    { name: "Staff", href: "/admin/staff" },
   ];
 
   const currentHeaderDate = new Intl.DateTimeFormat("en-US", {
@@ -123,12 +131,7 @@ function App() {
                 <DashboardLayout
                   headerProps={{
                     brandLabel: "LaundryTrack",
-                    navigationItems: [
-                      { name: "Admin Dashboard", href: "/admin/dashboard" },
-                      { name: "Orders", href: "/admin/orders" },
-                      { name: "Analytics", href: "/admin/analytics" },
-                      { name: "Disputes", href: "/admin/disputes" },
-                    ],
+                    navigationItems: adminNavigationItems,
                     headerUtilityContent: (
                       <button
                         type="button"
@@ -156,12 +159,7 @@ function App() {
                 <DashboardLayout
                   headerProps={{
                     brandLabel: "LaundryTrack",
-                    navigationItems: [
-                      { name: "Admin Dashboard", href: "/admin/dashboard" },
-                      { name: "Orders", href: "/admin/orders" },
-                      { name: "Analytics", href: "/admin/analytics" },
-                      { name: "Disputes", href: "/admin/disputes" },
-                    ],
+                    navigationItems: adminNavigationItems,
                     user: {
                       profileImage: adminUserImage,
                     },
@@ -170,6 +168,7 @@ function App() {
               }
             >
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
+              <Route path="/admin/staff" element={<AdminStaffManagement />} />
             </Route>
           </Route>
           <Route element={<RequireAuth allowedRoles={["admin"]} />}>
@@ -178,12 +177,7 @@ function App() {
                 <DashboardLayout
                   headerProps={{
                     brandLabel: "LaundryTrack",
-                    navigationItems: [
-                      { name: "Admin Dashboard", href: "/admin/dashboard" },
-                      { name: "Orders", href: "/admin/orders" },
-                      { name: "Analytics", href: "/admin/analytics" },
-                      { name: "Disputes", href: "/admin/disputes" },
-                    ],
+                    navigationItems: adminNavigationItems,
                     headerUtilityContent: adminSearchUtility,
                     user: {
                       profileImage: adminUserImage,
