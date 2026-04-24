@@ -118,7 +118,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                   }}
                 />
               }
@@ -131,7 +131,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     navigationItems: adminNavigationItems,
                     headerUtilityContent: (
                       <Link
@@ -159,7 +159,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     navigationItems: adminNavigationItems,
                     user: {
                       profileImage: adminUserImage,
@@ -178,7 +178,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                   }}
                 />
               }
@@ -192,7 +192,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     navigationItems: adminNavigationItems,
                     headerUtilityContent: adminSearchUtility,
                     user: {
@@ -210,7 +210,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     navigationItems: staffNavigationItems,
                     showNotificationBell: true,
                     notificationCount: 3,
@@ -229,7 +229,7 @@ function App() {
               element={
                 <DashboardLayout
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     navigationItems: staffNavigationItems,
                     headerInlineContent: pickupHeaderInlineContent,
                     showNotificationBell: true,
@@ -250,7 +250,7 @@ function App() {
                 <DashboardLayout
                   headerVariant="orderTracking"
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     backLink: "/staff/dashboard",
                     backLabel: "Back to Dashboard",
                     metaLabel: "Verification",
@@ -274,7 +274,7 @@ function App() {
                 <DashboardLayout
                   headerVariant="orderTracking"
                   headerProps={{
-                    brandLabel: "LaundryTrack",
+                    brandLabel: "washa",
                     backLink: "/dashboard/customer",
                     backLabel: "Back to Dashboard",
                     metaLabel: "Order",
