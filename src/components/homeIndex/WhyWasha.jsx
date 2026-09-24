@@ -53,7 +53,7 @@ const WhyWasha = () => {
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-semibold text-[#202020] sm:text-3xl">
-            Why Choose LaundryTrack?
+            Why Choose washa?
           </h2>
           <p className="mt-4 text-sm leading-6 text-[#666666] sm:text-base">
             Built for trust and transparency, giving you complete peace of mind

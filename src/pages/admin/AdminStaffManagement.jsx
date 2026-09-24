@@ -1,4 +1,5 @@
-import { RefreshCw, UsersRound } from "lucide-react";
+import { useState } from "react";
+import { Plus, RefreshCw, UserPlus, UsersRound } from "lucide-react";
 
 import Button from "../../components/Button.jsx";
 import Card from "../../components/Card.jsx";
@@ -12,13 +13,75 @@ const summaryCards = [
 
 const AdminStaffManagement = () => {
   const {
+    createStaffMember,
     error,
+    isCreating,
     isLoading,
     refreshStaffManagement,
     staffManagement,
   } = useAdminStaffManagement();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formValues, setFormValues] = useState({
+    email: "",
+    name: "",
+    password: "",
+    phone: "",
+  });
+  const [formError, setFormError] = useState("");
+  const [formMessage, setFormMessage] = useState("");
   const rows = staffManagement?.rows || [];
   const summary = staffManagement?.summary || {};
+
+  const updateFormValue = (key, value) => {
+    setFormValues((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  const resetForm = () => {
+    setFormValues({
+      email: "",
+      name: "",
+      password: "",
+      phone: "",
+    });
+  };
+
+  const handleCreateStaff = async (event) => {
+    event.preventDefault();
+    setFormError("");
+    setFormMessage("");
+
+    if (
+      !formValues.name.trim() ||
+      !formValues.email.trim() ||
+      !formValues.phone.trim() ||
+      !formValues.password
+    ) {
+      setFormError("Enter the staff member's name, email, phone, and temporary password.");
+      return;
+    }
+
+    if (formValues.password.length < 8) {
+      setFormError("Temporary password must be at least 8 characters long.");
+      return;
+    }
+
+    try {
+      await createStaffMember({
+        email: formValues.email.trim(),
+        name: formValues.name.trim(),
+        password: formValues.password,
+        phone: formValues.phone.trim(),
+      });
+      resetForm();
+      setShowCreateForm(false);
+      setFormMessage("Staff account created. They can now sign in from the Staff tab.");
+    } catch (requestError) {
+      setFormError(requestError.message || "Unable to create staff account.");
+    }
+  };
 
   return (
     <section className="min-h-screen bg-[var(--color-surface)]">
@@ -33,17 +96,30 @@ const AdminStaffManagement = () => {
             </p>
           </div>
 
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            onClick={() => refreshStaffManagement()}
-            disabled={isLoading}
-            className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.68rem] font-medium sm:px-4 sm:text-[0.75rem]"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 shrink-0 ${isLoading ? "animate-spin" : ""}`} />
-            <span className="truncate">{isLoading ? "Refreshing..." : "Refresh"}</span>
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => setShowCreateForm((value) => !value)}
+              className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.68rem] font-medium sm:px-4 sm:text-[0.75rem]"
+            >
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{showCreateForm ? "Close Form" : "Create Staff"}</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={() => refreshStaffManagement()}
+              disabled={isLoading}
+              className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.68rem] font-medium sm:px-4 sm:text-[0.75rem]"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 shrink-0 ${isLoading ? "animate-spin" : ""}`} />
+              <span className="truncate">{isLoading ? "Refreshing..." : "Refresh"}</span>
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -56,6 +132,112 @@ const AdminStaffManagement = () => {
           <div className="mt-4 rounded-[1rem] bg-white px-4 py-3 text-[0.82rem] text-slate-500 shadow-[0_6px_20px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
             Loading staff management...
           </div>
+        )}
+
+        {(showCreateForm || formMessage || formError) && (
+          <Card className="mt-4 rounded-[1.2rem] border-slate-100 p-4 shadow-[0_6px_20px_rgba(15,23,42,0.06)] sm:p-5">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-[var(--color-primary)]" />
+              <h2 className="text-[1rem] font-semibold text-slate-900">
+                Create Staff Account
+              </h2>
+            </div>
+
+            {formMessage && (
+              <div className="mt-4 rounded-[1rem] bg-emerald-50 px-4 py-3 text-[0.82rem] text-emerald-700">
+                {formMessage}
+              </div>
+            )}
+
+            {formError && (
+              <div className="mt-4 rounded-[1rem] bg-red-50 px-4 py-3 text-[0.82rem] text-red-600">
+                {formError}
+              </div>
+            )}
+
+            {showCreateForm && (
+              <form className="mt-4 grid gap-3 lg:grid-cols-2" onSubmit={handleCreateStaff}>
+                <label className="block">
+                  <span className="text-[0.72rem] font-medium text-slate-600">
+                    Full Name
+                  </span>
+                  <input
+                    type="text"
+                    value={formValues.name}
+                    onChange={(event) => updateFormValue("name", event.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 px-3 text-[0.82rem] text-slate-700 outline-none focus:border-[var(--color-primary)]"
+                    placeholder="Staff full name"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-[0.72rem] font-medium text-slate-600">
+                    Email Address
+                  </span>
+                  <input
+                    type="email"
+                    value={formValues.email}
+                    onChange={(event) => updateFormValue("email", event.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 px-3 text-[0.82rem] text-slate-700 outline-none focus:border-[var(--color-primary)]"
+                    placeholder="staff@example.com"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-[0.72rem] font-medium text-slate-600">
+                    Phone Number
+                  </span>
+                  <input
+                    type="tel"
+                    value={formValues.phone}
+                    onChange={(event) => updateFormValue("phone", event.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 px-3 text-[0.82rem] text-slate-700 outline-none focus:border-[var(--color-primary)]"
+                    placeholder="Staff phone number"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-[0.72rem] font-medium text-slate-600">
+                    Temporary Password
+                  </span>
+                  <input
+                    type="text"
+                    value={formValues.password}
+                    onChange={(event) => updateFormValue("password", event.target.value)}
+                    className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 px-3 text-[0.82rem] text-slate-700 outline-none focus:border-[var(--color-primary)]"
+                    placeholder="At least 8 characters"
+                  />
+                </label>
+
+                <div className="flex flex-col gap-2 pt-1 sm:flex-row lg:col-span-2">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    disabled={isCreating}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[0.76rem] font-semibold"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span>{isCreating ? "Creating..." : "Create Staff Account"}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    onClick={() => {
+                      resetForm();
+                      setFormError("");
+                      setShowCreateForm(false);
+                    }}
+                    disabled={isCreating}
+                    className="rounded-xl px-4 py-2 text-[0.76rem] font-semibold"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Card>
         )}
 
         <div className="mt-4 grid grid-cols-3 gap-3">

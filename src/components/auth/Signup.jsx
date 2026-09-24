@@ -12,7 +12,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import laundry3Image from "../../assets/images/laundry3.jpg";
@@ -111,8 +111,8 @@ const Signup = () => {
       <div className="mx-auto w-full max-w-6xl">
         <div className="mx-auto mb-6 flex w-full max-w-[420px] items-center justify-between lg:hidden">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoBlue} alt="LaundryTrack" className="h-8 w-8 object-contain" />
-            <span className="text-sm font-semibold text-slate-900">LaundryTrack</span>
+            <img src={logoBlue} alt="washa" className="h-8 w-8 object-contain" />
+            <span className="text-sm font-bold text-slate-900">washa</span>
           </Link>
           <Link
             to="/"
@@ -126,15 +126,15 @@ const Signup = () => {
         <div className="grid min-h-[calc(100vh-2rem)] w-full gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-10">
         <div className="hidden px-8 py-6 lg:block">
           <div className="flex items-center gap-2">
-            <img src={logoBlue} alt="LaundryTrack" className="h-6 w-6 object-contain" />
-            <span className="text-base font-medium text-slate-800">LaundryTrack</span>
+            <img src={logoBlue} alt="washa" className="h-6 w-6 object-contain" />
+            <span className="text-base font-bold text-slate-800">washa</span>
           </div>
 
           <div className="mt-10 max-w-[420px]">
             <div className="overflow-hidden rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.14)]">
               <img
                 src={laundry3Image}
-                alt="LaundryTrack app and washing machines"
+                alt="washa app and washing machines"
                 className="h-[180px] w-full object-cover"
               />
             </div>
@@ -162,7 +162,7 @@ const Signup = () => {
 
               <div className="mt-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
                 <p className="text-[0.78rem] leading-6 text-slate-500">
-                  "LaundryTrack has revolutionized how we manage our business
+                  "washa has revolutionized how we manage our business
                   laundry. The photo documentation gives us complete confidence."
                 </p>
 
@@ -315,14 +315,23 @@ const Signup = () => {
   );
 };
 
-const FormField = ({ label, placeholder, Icon, type = "text", value, onChange }) => {
+const FormField = ({
+  label,
+  placeholder,
+  Icon: FieldIcon,
+  type = "text",
+  value,
+  onChange,
+}) => {
   return (
     <label className="block">
       <span className="mb-2 block text-[0.72rem] font-medium text-slate-700">
         {label}
       </span>
       <div className="flex h-11 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3">
-        <Icon className="h-4 w-4 shrink-0 text-slate-300" />
+        {createElement(FieldIcon, {
+          className: "h-4 w-4 shrink-0 text-slate-300",
+        })}
         <input
           type={type}
           value={value}

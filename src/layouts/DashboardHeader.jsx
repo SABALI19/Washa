@@ -1,9 +1,11 @@
 import Button from "../components/Button";
 import { ArrowLeft, Bell, ChevronDown, PanelRightOpen } from "lucide-react";
+import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import washaLogo from "../assets/logo/washa-logo-blue.png";
 import Profile from "../components/common/Profile";
 import useAuthSession from "../hooks/useAuthSession.js";
+import useNotifications from "../hooks/useNotifications.js";
 import { useDashboardLayout } from "./DashboardLayoutContext.jsx";
 import { getDashboardPathForRole } from "../utils/auth.js";
 
@@ -13,10 +15,31 @@ const defaultNavigationItems = [
   { name: "Help", href: "/help" },
 ];
 
+const formatNotificationTime = (value) => {
+  if (!value) return "Recently";
+
+  const elapsedMinutes = Math.max(
+    Math.round((Date.now() - new Date(value).getTime()) / (60 * 1000)),
+    1,
+  );
+
+  if (elapsedMinutes < 60) {
+    return `${elapsedMinutes}m ago`;
+  }
+
+  const elapsedHours = Math.round(elapsedMinutes / 60);
+
+  if (elapsedHours < 24) {
+    return `${elapsedHours}h ago`;
+  }
+
+  return `${Math.round(elapsedHours / 24)}d ago`;
+};
+
 const DashboardHeader = ({
   user,
   variant = "default",
-  brandLabel = "Washa",
+  brandLabel = "washa",
   navigationItems = defaultNavigationItems,
   backLink = "/dashboard/customer",
   backLabel = "Back to Dashboard",
@@ -36,8 +59,18 @@ const DashboardHeader = ({
   const location = useLocation();
   const { orderId } = useParams();
   const storedSession = useAuthSession();
+  const {
+    error: notificationError,
+    isLoading: notificationsLoading,
+    markAllRead,
+    notifications,
+    unreadCount,
+  } = useNotifications();
   const dashboardLayout = useDashboardLayout();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const isTrackingVariant = variant === "orderTracking";
+  const resolvedNotificationCount = storedSession?.token ? unreadCount : notificationCount;
+  const shouldShowNotificationBell = Boolean(storedSession?.token) || showNotificationBell;
   const resolvedUser =
     storedSession?.user || user
       ? {
@@ -60,8 +93,8 @@ const DashboardHeader = ({
       <div className="container mx-auto px-3 sm:px-4">
         <div className="flex min-w-0 items-center justify-between gap-3 py-3 sm:h-16 sm:py-0">
           <Link to={brandLink} className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
-            <img src={washaLogo} alt="Washa Logo" className="h-8 w-auto sm:h-10" />
-            <span className="truncate text-sm font-semibold text-gray-900">
+            <img src={washaLogo} alt="washa logo" className="h-8 w-auto sm:h-10" />
+            <span className="truncate text-sm font-bold text-gray-900">
               {brandLabel}
             </span>
           </Link>
@@ -127,18 +160,99 @@ const DashboardHeader = ({
                 {headerActionHasChevron && <ChevronDown className="h-4 w-4" />}
               </Button>
             )}
-            {showNotificationBell && (
-              <button
-                type="button"
-                className="relative rounded-full p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)] sm:p-2"
-              >
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-xs font-semibold text-white">
-                    {notificationCount}
-                  </span>
+            {shouldShowNotificationBell && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setNotificationsOpen((value) => !value)}
+                  className="relative rounded-full p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--color-primary)] sm:p-2"
+                  aria-label="Open notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  {resolvedNotificationCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-xs font-semibold text-white">
+                      {resolvedNotificationCount}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <>
+                    <button
+                      type="button"
+                      className="fixed inset-0 z-[70] cursor-default bg-transparent"
+                      aria-label="Close notifications"
+                      onClick={() => setNotificationsOpen(false)}
+                    />
+                    <div className="fixed left-3 right-3 top-[4.5rem] z-[80] max-h-[calc(100vh-5.5rem)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-[360px] sm:max-h-[420px]">
+                    <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-[0.9rem] font-semibold text-slate-900">
+                          Notifications
+                        </p>
+                        <p className="text-[0.68rem] text-slate-500">
+                          {resolvedNotificationCount} unread
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        className="shrink-0 rounded-lg px-2 py-1 text-[0.72rem] font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary-soft)]"
+                      >
+                        Mark all read
+                      </button>
+                    </div>
+
+                    <div className="max-h-[calc(100vh-12rem)] overflow-y-auto overscroll-contain sm:max-h-[360px]">
+                      {notificationsLoading && (
+                        <div className="px-4 py-5 text-[0.78rem] text-slate-500">
+                          Loading notifications...
+                        </div>
+                      )}
+
+                      {notificationError && (
+                        <div className="px-4 py-5 text-[0.78rem] text-red-500">
+                          {notificationError}
+                        </div>
+                      )}
+
+                      {!notificationsLoading && !notificationError && notifications.length === 0 && (
+                        <div className="px-4 py-5 text-[0.78rem] text-slate-500">
+                          No notifications yet.
+                        </div>
+                      )}
+
+                      {!notificationsLoading &&
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`border-b border-slate-100 px-4 py-3 last:border-b-0 ${
+                              notification.readAt ? "bg-white" : "bg-[#f6fbfc]"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="break-words text-[0.8rem] font-semibold text-slate-900">
+                                  {notification.title}
+                                </p>
+                                <p className="mt-1 break-words text-[0.74rem] leading-5 text-slate-600">
+                                  {notification.message}
+                                </p>
+                              </div>
+                              {!notification.readAt && (
+                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-primary)]" />
+                              )}
+                            </div>
+                            <p className="mt-2 text-[0.66rem] text-slate-400">
+                              {formatNotificationTime(notification.createdAt)}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                  </>
                 )}
-              </button>
+              </div>
             )}
             <Profile user={resolvedUser} size="md" />
           </div>

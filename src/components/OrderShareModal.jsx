@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Copy, ExternalLink, LoaderCircle, QrCode, X } from "lucide-react";
 
 import Button from "./Button";
@@ -16,11 +16,10 @@ const OrderShareModal = ({
   orderLabel = "",
   shareUrl = "",
 }) => {
-  const [copyMessage, setCopyMessage] = useState("");
-
-  useEffect(() => {
-    setCopyMessage("");
-  }, [isOpen, shareUrl]);
+  const copyMessageKey = `${isOpen ? "open" : "closed"}:${shareUrl}`;
+  const [copyState, setCopyState] = useState({ key: "", message: "" });
+  const copyMessage =
+    copyState.key === copyMessageKey ? copyState.message : "";
 
   if (!isOpen) {
     return null;
@@ -29,9 +28,15 @@ const OrderShareModal = ({
   const handleCopyLink = async () => {
     try {
       await copyTextToClipboard(shareUrl);
-      setCopyMessage("Share link copied.");
+      setCopyState({
+        key: copyMessageKey,
+        message: "Share link copied.",
+      });
     } catch (copyError) {
-      setCopyMessage(copyError.message || "Unable to copy the share link.");
+      setCopyState({
+        key: copyMessageKey,
+        message: copyError.message || "Unable to copy the share link.",
+      });
     }
   };
 

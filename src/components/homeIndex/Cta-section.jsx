@@ -14,7 +14,7 @@ const CtaSection = () => {
           Experience Laundry You Can Trust
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/80 sm:text-base">
-          Join thousands of customers who trust LaundryTrack for transparent,
+          Join thousands of customers who trust washa for transparent,
           accountable laundry service. See every step of your laundry journey.
         </p>
 
